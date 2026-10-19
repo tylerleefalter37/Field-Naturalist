@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Naturalist: The Living Archive</title>
+<style>
+  :root {
+    --bg-parchment: #f4eee1;
+    --card-bg: #fcf9f2;
+    --border-color: #5c4e3e;
+    --border-light: #c2b59b;
+    --text-main: #2b2118;
+    --text-muted: #6e6252;
+    --accent-rust: #8b3a22;
+    --accent-gold: #9c6c18;
+    --accent-green: #3b5336;
+    --accent-blue: #2c4d6f;
+    --font-serif: "Georgia", "Baskerville", "Palatino Linotype", serif;
+    --font-mono: "Courier New", "Consolas", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-parchment);
+    color: var(--text-main);
+    font-family: var(--font-serif);
+    line-height: 1.5;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+  }
+
+  #journal-wrapper {
+    width: 100%;
+    max-width: 1000px;
+    background: var(--card-bg);
+    border: 3px double var(--border-color);
+    box-shadow: 0 4px 20px rgba(43, 33, 24, 0.15);
+    padding: 20px 28px;
+    position: relative;
+  }
+
+  header {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .header-sub {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-rust);
+  }
+
+  h1 {
+    font-size: 1.9rem;
+    font-weight: normal;
+    letter-spacing: 1px;
+    margin: 4px 0;
+    color: var(--text-main);
+  }
+
+  /* Status Bar */
+  #status-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    background: #ede4d1;
+    border: 1px solid var(--border-light);
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+  }
+  .stat-block strong { color: var(--accent-rust); }
+
+  /* Navigation Tabs */
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+
+  .nav-btn {
+    background: #e7ddc8;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .nav-btn:hover { background: #dcd0b6; }
+  .nav-btn.active {
+    background: var(--border-color);
+    color: #fff;
+  }
+
+  /* View Panels */
+  .view-panel { display: none; }
+  .view-panel.active-panel { display: block; }
+
+  /* Buttons & Inputs */
+  button.action-btn {
+    background: #ded2b9;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-family: var(--font-serif);
+    font-size: 0.92rem;
+    padding: 7px 13px;
+    cursor: pointer;
+    margin: 3px 2px;
+  }
+  button.action-btn:hover { background: #cfc1a2; }
+  button.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Accession Cards */
+  .accession-card {
+    border: 2px solid var(--border-color);
+    background: #fff;
+    padding: 16px;
+    margin: 14px 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: relative;
+  }
+  .accession-header {
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: var(--accent-rust);
+  }
+  .accession-row { margin-bottom: 6px; }
+  .accession-desc {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e0d5be;
+    color: #1a140e;
+  }
+
+  /* Auction Display */
+  .auction-box {
+    border: 2px solid var(--accent-rust);
+    background: #faf4e8;
+    padding: 16px;
+    margin-top: 14px;
+  }
+  .ticker-box {
+    background: #1e1914;
+    color: #e8dcc4;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 12px;
+    height: 190px;
+    overflow-y: auto;
+    border: 1px solid #3d3228;
+    margin: 10px 0;
+    line-height: 1.4;
+  }
+  .bidding-clash-banner {
+    background: var(--accent-rust);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    padding: 6px 10px;
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    animation: flash 1.5s infinite;
+  }
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+  }
+
+  .item-row {
+    border-bottom: 1px solid #dfd4bd;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Seals & Stamps */
+  .stamp {
+    display: inline-block;
+    border: 2px solid var(--accent-green);
+    color: var(--accent-green);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+  }
+  .stamp-gold {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    transform: rotate(2deg);
+  }
+  .stamp-blue {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    transform: rotate(-1deg);
+  }
+
+  /* Heartfelt Box */
+  .family-letter-box {
+    background: #fffbf3;
+    border: 2px solid var(--accent-gold);
+    padding: 18px 22px;
+    margin: 16px 0;
+    position: relative;
+    box-shadow: 2px 3px 12px rgba(92, 78, 62, 0.08);
+  }
+  .family-letter-box h3 {
+    font-family: var(--font-serif);
+    color: var(--accent-rust);
+    font-size: 1.25rem;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="journal-wrapper">
+  <header>
+    <div class="header-sub">United States Department of the Interior &bull; National Park Service</div>
+    <h1>The Living Archive: Master Naturalist Logbook</h1>
+    <div style="font-size:0.9rem; color:var(--text-muted); font-style:italic;">
+      Comprehensive Survey, Scientific Authentication &amp; Preservation Ledger of all 63 National Parks
+    </div>
+  </header>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div class="stat-block">LOCATION: <strong id="bar-park">...</strong></div>
+    <div class="stat-block">DISTRICT: <strong id="bar-district">...</strong></div>
+    <div class="stat-block">FUNDS: <strong id="bar-funds">$0</strong></div>
+    <div class="stat-block">PACK: <strong id="bar-bag">0 items</strong></div>
+    <div class="stat-block">CONSERVANCY: <strong id="bar-donations">$0</strong></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <button class="nav-btn active" onclick="switchView('view-combing')">[ 1 ] Field Combing</button>
+    <button class="nav-btn" onclick="switchView('view-inventory')">[ 2 ] Pack &amp; Master Ledger</button>
+    <button class="nav-btn" onclick="switchView('view-lab')">[ 3 ] Curatorial Lab (Grade &amp; Certify)</button>
+    <button class="nav-btn" onclick="switchView('view-auction')">[ 4 ] Archival Auction Floor</button>
+    <button class="nav-btn" onclick="switchView('view-outfitter')">[ 5 ] Backcountry Outfitter</button>
+    <button class="nav-btn" onclick="switchView('view-conservancy')">[ 6 ] Conservancy &amp; Support</button>
+    <button class="nav-btn" onclick="switchView('view-atlas')">[ 7 ] National Atlas (63 Parks)</button>
+  </nav>
+
+  <!-- PANEL 1: FIELD COMBING -->
+  <div id="view-combing" class="view-panel active-panel">
+    <div style="margin-bottom:12px;">
+      <h2 id="comb-park-title" style="font-size:1.3rem; color:var(--accent-rust);">National Park Survey</h2>
+      <div id="comb-park-meta" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);"></div>
+    </div>
+
+    <div style="background:#ede5d2; border:1px solid var(--border-light); padding:10px 12px; margin-bottom:14px;">
+      <label style="font-family:var(--font-mono); font-size:0.85rem; font-weight:bold;">ACTIVE SURVEY ZONE:</label>
+      <select id="zone-selector" onchange="changeZone()" style="font-family:var(--font-serif); font-size:0.95rem; padding:4px 8px; margin-left:8px;"></select>
+    </div>
+
+    <div id="zone-description" style="font-style:italic; line-height:1.6; margin-bottom:16px; background:#fff; border-left:3px solid var(--border-color); padding:10px 14px;">
+      Select a zone to begin your field survey.
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <strong style="font-family:var(--font-mono); font-size:0.85rem; display:block; margin-bottom:6px;">FIELD COMBING ACTIONS:</strong>
+      <button class="action-btn" onclick="combLandscape('surface')">&#9656; Scan Surface Float &amp; Detritus</button>
+      <button class="action-btn" onclick="combLandscape('erosion')">&#9656; Inspect Fresh Cutbank Erosion</button>
+      <button class="action-btn" onclick="combLandscape('sift')">&#9656; Sift Heavy Gravel Traps</button>
+      <button class="action-btn" onclick="combLandscape('scree')">&#9656; Glass Talus &amp; High Ridge Strata</button>
+    </div>
+
+    <div id="discovery-log" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- PANEL 2: SPECIMEN BAG & CATALOG -->
+  <div id="view-inventory" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:10px;">Field Pack &amp; Master Archival Catalog</h2>
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <button class="action-btn" onclick="renderPackView('bag')">Uncataloged Specimens in Pack (<span id="pack-bag-count">0</span>)</button>
+      <button class="action-btn" onclick="renderPackView('archive')">Permanent Park Ledger (<span id="pack-archive-count">0</span> cataloged)</button>
+    </div>
+    <div id="pack-content-area"></div>
+  </div>
+
+  <!-- PANEL 3: CURATORIAL LAB (GRADING & AUTHENTICATION) -->
+  <div id="view-lab" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:6px;">Curatorial Laboratory &amp; Bureau of Standards</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+      Professional preservation facilities. Grading physical preservation and certifying geological/archaeological provenance permanently elevates auction appraisals and prevents institutional discount bids.
+    </p>
+
+    <div style="background:#ede5d2; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
+      <label style="font-family:var(--font-mono); font-size:0.85rem;"><strong>SELECT SPECIMEN FOR EVALUATION:</strong></label>
+      <select id="lab-item-select" onchange="updateLabPreview()" style="font-family:var(--font-serif); font-size:0.9rem; padding:4px 8px; margin-left:8px;"></select>
+    </div>
+
+    <div id="lab-active-area" style="display:none;">
+      <div id="lab-specimen-card" class="accession-card"></div>
+      
+      <div class="grid-2" style="margin-top:12px;">
+        <!-- Service 1: Physical Condition Grading -->
+        <div style="background:#fff; border:2px solid var(--accent-gold); padding:14px;">
+          <h3 style="font-size:1.05rem; color:var(--accent-gold); margin-bottom:6px;">Consortium Condition Grading</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
+            Stereomicroscopic evaluation of conchoidal edge flaking, mineral surface luster, and patina. Assigns an official archival grade (up to 2.50x value multiplier).
+          </p>
+          <div style="font-family:var(--font-mono); font-size:0.85rem; margin-bottom:8px;">
+            Service Fee: <strong id="lab-grade-fee">$0</strong>
+          </div>
+          <button id="btn-do-grade" class="action-btn" onclick="executeGrading()">Submit for Official Grading</button>
+        </div>
+
+        <!-- Service 2: Scientific Spectrometric Authentication -->
+        <div style="background:#fff; border:2px solid var(--accent-blue); padding:14px;">
+          <h3 style="font-size:1.05rem; color:var(--accent-blue); margin-bottom:6px;">USGS &amp; Smithsonian Authentication</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
+            Elemental XRF spectrometry and radiocarbon epoch verification. Certifies authenticity, eliminates counter-offer skepticism (+40% permanent base value bonus), and doubles bidding war likelihood.
+          </p>
+          <div style="font-family:var(--font-mono); font-size:0.85rem; margin-bottom:8px;">
+            Certification Fee: <strong id="lab-auth-fee">$0</strong>
+          </div>
+          <button id="btn-do-auth" class="action-btn" onclick="executeAuthentication()">Perform Authentication Assay</button>
+        </div>
+      </div>
+
+      <div id="lab-result-log" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: AUCTION FLOOR -->
+  <div id="view-auction" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:8px;">The Archival Consortium: Bidding Floor</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">
+      Accredited domestic and international museums, universities, and sovereign heritage trusts bid for permanent exhibition sponsorship.
+    </p>
+
+    <div id="auction-select-area" style="background:#ede4d1; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
+      <label style="font-family:var(--font-mono); font-size:0.85rem;"><strong>SELECT LOT TO CONSIGN:</strong></label>
+      <select id="auction-item-select" style="font-family:var(--font-serif); font-size:0.9rem; padding:4px 8px; margin-left:8px;"></select>
+      <button class="action-btn" onclick="startAuctionConsignment()" style="margin-left:8px;">Send Lot to Rostrum</button>
+    </div>
+
+    <div id="auction-active-area" style="display:none;" class="auction-box">
+      <div id="clash-banner" class="bidding-clash-banner" style="display:none;">
+        &#9888; CURATORIAL CLASH: GLOBAL INSTITUTIONAL DUEL IN PROGRESS &#9888;
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <h3 id="auction-lot-title" style="color:var(--accent-rust);">Lot #001: Specimen Name</h3>
+        <div id="auction-lot-meta" style="font-family:var(--font-mono); font-size:0.85rem;"></div>
+      </div>
+      <div id="auction-ticker" class="ticker-box"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+        <div style="font-family:var(--font-mono); font-size:1.05rem;">
+          HIGH BID: <strong id="auction-high-bid" style="color:var(--accent-gold);">$0</strong>
+          <span id="auction-high-bidder" style="font-size:0.82rem; color:var(--text-muted); margin-left:6px;"></span>
+        </div>
+        <div id="auction-controls">
+          <button class="action-btn" onclick="advanceAuction()">[ Let Floor Run ]</button>
+          <button class="action-btn" onclick="callFinalBids()">[ Demand Final Call ]</button>
+          <button class="action-btn" onclick="hammerDown()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down (Accept) ]</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 5: OUTFITTER -->
+  <div id="view-outfitter" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:8px;">Camp 4 Backcountry Outfitters</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+      Precision field optics, micro-excavation equipment, and chartered long-distance transport rigs.
+    </p>
+    <div id="outfitter-list"></div>
+  </div>
+
+  <!-- PANEL 6: PARK CONSERVANCY & CREATOR SUPPORT -->
+  <div id="view-conservancy" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:8px;">Preservation, Real-World Stewardship &amp; Creator Support</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+      Preserving our public lands both inside the simulation and out in the real wilderness.
+    </p>
+
+    <!-- REAL WORLD HEARTFELT CREATOR BOX -->
+    <div class="family-letter-box">
+      <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+        &bull; A Note from the Trail &bull;
+      </div>
+      <h3>From One Naturalist to Another</h3>
+      <p style="font-size:0.95rem; line-height:1.6; margin-bottom:12px;">
+        Hey there! I created this game as a labor of love for history, geology, and our majestic National Parks. I'm a stay-at-home dad dedicated to teaching my two wonderful kids about the wonders of the natural world. My dream is to pack up my family—my incredible wife and our two little adventurers—and visit all 63 US National Parks together in person. 
+      </p>
+      <p style="font-size:0.95rem; line-height:1.6; margin-bottom:14px;">
+        Our absolute top dream destination is <strong>Zion National Park</strong>—to walk between those towering red sandstone canyon walls and stand beneath the desert stars together. If you're enjoying your time combing these virtual landscapes, cataloging relics, and learning about our heritage, any support toward our family's park expedition fund means the world to us!
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+        <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=tylerleefalter37%40gmail.com&currency_code=USD&item_name=National+Parks+Family+Journey+Fund" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+          <button class="action-btn" style="background:var(--accent-gold); color:#fff; font-weight:bold; padding:8px 16px; border:none; cursor:pointer;">
+            &hearts; Support the Family's Park Journey on PayPal
+          </button>
+        </a>
+        <span style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-muted);">
+          Direct PayPal: <strong>tylerleefalter37@gmail.com</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- REAL WORLD OFFICIAL DONATION LINK -->
+    <div style="background:#f1f6ed; border:2px solid var(--accent-green); padding:16px 20px; margin-bottom:20px;">
+      <h3 style="font-size:1.15rem; color:var(--accent-green); margin-bottom:6px;">Support the Real National Parks</h3>
+      <p style="font-size:0.92rem; line-height:1.5; margin-bottom:12px;">
+        The actual National Park System relies on conservationists like you to protect wildlife habitats, fund youth education, and restore historical landmarks across more than 85 million acres.
+      </p>
+      <a href="https://give.nationalparks.org" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+        <button class="action-btn" style="background:var(--accent-green); color:#fff; font-weight:bold; padding:8px 16px; border:none; cursor:pointer;">
+          &bull; Donate Directly to The National Park Foundation (give.nationalparks.org) &bull;
+        </button>
+      </a>
+    </div>
+
+    <!-- IN-GAME CONSERVANCY TIERS -->
+    <h3 style="font-size:1.15rem; margin:16px 0 8px 0; color:var(--accent-rust);">In-Game Park Endowments</h3>
+    <div id="conservancy-tiers-display"></div>
+  </div>
+
+  <!-- PANEL 7: NATIONAL ATLAS -->
+  <div id="view-atlas" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:8px;">National Atlas of the 63 US National Parks</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+      Select an authorized survey district. Travel within your home district is free; distant regions incur transit fares.
+    </p>
+    <div id="atlas-content"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// 1. DATA: 8 SURVEY DISTRICTS & ALL 63 US NATIONAL PARKS
+// ============================================================================
+const DISTRICTS = {
+  1: { name: "Pacific Northwest & Cascades", color: "#2d5a37" },
+  2: { name: "Sierra Nevada & California Deserts", color: "#8c6239" },
+  3: { name: "Southwest & Colorado Plateau", color: "#a2492d" },
+  4: { name: "Rocky Mountain Spine", color: "#405b6e" },
+  5: { name: "Heartland & Great Lakes", color: "#4f6345" },
+  6: { name: "Appalachian & Eastern Seaboard", color: "#344d5c" },
+  7: { name: "Subtropical Gulf & Caribbean", color: "#2e6a6a" },
+  8: { name: "Far North & Pacific Territories", color: "#3b4859" }
+};
+
+const ALL_PARKS = [
+  // District 1: PNW & Cascades (6)
+  { id: "olym", name: "Olympic National Park", state: "WA", est: 1938, district: 1, zones: [
+    { title: "Hoh Rain Forest Mossy Terrace", desc: "Immense Sitka spruces and bigleaf maples hung with club moss. Heavy needle duff covers century-old nurse logs." },
+    { title: "Ruby Beach Sea-Stack Shingle", desc: "Pounded by gray Pacific surf. Driftwood logs litter sorted cobbles of weathered basalt and marine sandstone." },
+    { title: "Hurricane Ridge Subalpine Scree", desc: "Sharp slate and pillow basalt talus near timberline. Cold alpine winds scour thin scree mats." }
+  ]},
+  { id: "mora", name: "Mount Rainier National Park", state: "WA", est: 1899, district: 1, zones: [
+    { title: "Nisqually Glacial Outwash Bar", desc: "Braided milky meltwater cutting through gray andesite boulders, pumice sand, and lahars." },
+    { title: "Paradise Meadow Moraine", desc: "Subalpine turf, heather mats, and volcanic tephra layers exposed by winter snowmelt." },
+    { title: "Carbon River Ancient Cedar Duff", desc: "Temperate rainforest understory littered with western redcedar bark fragments and damp moss." }
+  ]},
+  { id: "noca", name: "North Cascades National Park", state: "WA", est: 1968, district: 1, zones: [
+    { title: "Cascade Pass Granite Cirque", desc: "Amphitheaters of Skagit gneiss and granite talus framed by sheer hanging glaciers." },
+    { title: "Stehekin River Gravel Bar", desc: "Glacial water sorting heavy river agates, nephrite jade float, and quartz cobbles." },
+    { title: "Thunder Creek Alder Thicket", desc: "Dense riparian river gravels mixed with damp avalanche debris." }
+  ]},
+  { id: "crla", name: "Crater Lake National Park", state: "OR", est: 1902, district: 1, zones: [
+    { title: "Mount Mazama Pumice Desert", desc: "Vast barren benches of powdery rhyodacite pumice and obsidian volcanic fragments." },
+    { title: "Sun Notch Caldera Rim", desc: "Dacite cliff edges overlooking sapphire water, strewn with wind-blown whitebark pine cones." },
+    { title: "Pinnacles Pyroclastic Gully", desc: "Eroded fossil fumaroles of welded tuff rising above dry pumice wash gravels." }
+  ]},
+  { id: "redw", name: "Redwood National Park", state: "CA", est: 1968, district: 1, zones: [
+    { title: "Prairie Creek Old-Growth Understory", desc: "Coastal redwood trunks rising through sword fern groves and deep tannic duff." },
+    { title: "Gold Bluffs Marine Terrace", desc: "Coastal bluffs of gold-bearing auriferous gravel and beach pebble beds." },
+    { title: "Redwood Creek Gravel Shingle", desc: "Sorted Franciscan chert, serpentine cobbles, and water-worn redwood root chunks." }
+  ]},
+  { id: "lavo", name: "Lassen Volcanic National Park", state: "CA", est: 1916, district: 1, zones: [
+    { title: "Bumpass Hell Hydrothermal Terrace", desc: "Steaming mud pots, boiling sulfur crusts, and fractured dacite boulders smelling of pyrite." },
+    { title: "Chaos Jumbles Rock Avalanche", desc: "Massive debris field of angular volcanic rock sheared from 17th-century collapses." },
+    { title: "Cinder Cone Ash Apron", desc: "Deep black basaltic cinder scree sloping steeply toward painted pumice dunes." }
+  ]},
+
+  // District 2: Sierra & California Deserts (6)
+  { id: "yose", name: "Yosemite National Park", state: "CA", est: 1890, district: 2, zones: [
+    { title: "Merced River Alluvial Bed", desc: "Smooth granodiorite gravels, quartz float, and sugar pine cones sorted by high spring cascades." },
+    { title: "Tuolumne Meadows Glacial Bench", desc: "Granite domes exhibiting glacial polish, chatter marks, and erratic boulders perched on high turf." },
+    { title: "Mariposa Grove Giant Sequoia Duff", desc: "Fibrous cinnamon-colored sequoia bark mulch, tiny cones, and weathered granite grus." }
+  ]},
+  { id: "sequ", name: "Sequoia National Park", state: "CA", est: 1890, district: 2, zones: [
+    { title: "Giant Forest High Canopy Floor", desc: "Enormous sequoia trunks anchoring deep damp duff enriched by centuries of needle fall." },
+    { title: "Marble Falls Schist Gorge", desc: "Bands of metamorphic marble, schist, and slate carved by cold river torrents." },
+    { title: "Moro Rock Granite Talus", desc: "Dry, wind-scoured granite boulder fields dropping toward the Kaweah River basin." }
+  ]},
+  { id: "kica", name: "Kings Canyon National Park", state: "CA", est: 1940, district: 2, zones: [
+    { title: "Roaring River Glacial Chasm", desc: "Granite gorge bed filled with sorted white granite river boulders and pine drift." },
+    { title: "Cedar Grove Riparian Wash", desc: "Sun-dappled gravel bars beneath incense cedars, with scattered metamorphic float." },
+    { title: "Evolution Basin High Cirque", desc: "Barren alpine granite gravels bordering crystal tarns above the 11,000-foot tree line." }
+  ]},
+  { id: "deva", name: "Death Valley National Park", state: "CA", est: 1994, district: 2, zones: [
+    { title: "Badwater Basin Halite Flats", desc: "Hexagonal crusts of crystalline sodium chloride and borax mud flats 282 feet below sea level." },
+    { title: "Titus Canyon Conglomerate Wash", desc: "Towering limestone walls enclosing dry flash-flood gravels rich in Paleozoic fossil fragments." },
+    { title: "Furnace Creek Borax Bench", desc: "Sun-bleached sedimentary benches littered with colemanite crystals and 1880s mule-team debris." }
+  ]},
+  { id: "jotr", name: "Joshua Tree National Park", state: "CA", est: 1994, district: 2, zones: [
+    { title: "Hidden Valley Monzogranite Maze", desc: "Weathered joints of rounded quartz monzonite boulders resting on coarse quartz grus." },
+    { title: "Cholla Cactus Desert Pavement", desc: "Interlocking stones of dark desert varnish broken by spines and dry wash sands." },
+    { title: "Lost Horse Mine Tailings", desc: "Dry alluvial fans bearing historic quartz vein tailing piles and iron mining debris from the 1890s." }
+  ]},
+  { id: "pinn", name: "Pinnacles National Park", state: "CA", est: 2013, district: 2, zones: [
+    { title: "Bear Gulch Talus Cave Corridor", desc: "Enormous rhyolite volcanic boulders wedged into steep ravines, forming cool damp breezeways." },
+    { title: "High Peaks Rhyolite Spire Rim", desc: "Sheer red breccia cliffs scoured by desert winds; high roosts of the California condor." },
+    { title: "Chalone Creek Sycamore Wash", desc: "Fine gravels of volcanic ash, andesite cobbles, and shed acorns beneath coastal live oaks." }
+  ]},
+
+  // District 3: Southwest & Colorado Plateau (12)
+  { id: "grca", name: "Grand Canyon National Park", state: "AZ", est: 1919, district: 3, zones: [
+    { title: "Tonto Platform Shale Bench", desc: "Greenish Bright Angel shale flats strewn with Cambrian trilobite fossils and Muav limestone float." },
+    { title: "Colorado River Cobble Terrace", desc: "Polished river gravels, Precambrian Vishnu schist boulders, and fine red silt deposits." },
+    { title: "Kaibab Rim Pinyon-Juniper Ledge", desc: "Chert-nodule-bearing Kaibab limestone overlooking sheer drops; fossil brachiopod shells everywhere." }
+  ]},
+  { id: "zion", name: "Zion National Park", state: "UT", est: 1919, district: 3, zones: [
+    { title: "Virgin River Narrows Sandstone Bed", desc: "Cold river rapids flowing between towering red Navajo sandstone walls with water-worn cobbles." },
+    { title: "Kolob Canyons Slickrock Bench", desc: "Navajo sandstone cross-beds displaying fine wind ripples, iron-stone concretions, and scrub oak duff." },
+    { title: "Weeping Rock Spring Terraces", desc: "Hanging gardens of maidenhair fern on damp porous sandstone seep lines with calcite crusts." }
+  ]},
+  { id: "brca", name: "Bryce Canyon National Park", state: "UT", est: 1928, district: 3, zones: [
+    { title: "Queens Garden Hoodoo Base", desc: "Soft, crumbly pink-and-white Claron limestone gravels washed into gullies below delicate hoodoos." },
+    { title: "Rim Trail Bristlecone Ridge", desc: "Windswept limestone cliffs sustaining twisted 1,500-year-old Great Basin bristlecone pines." },
+    { title: "Yellow Creek Clay Wash", desc: "Fine alluvial mud and calcified siltstone pebbles sorted by summer flash floods." }
+  ]},
+  { id: "arch", name: "Arches National Park", state: "UT", est: 1971, district: 3, zones: [
+    { title: "Devil's Garden Entrada Sand Bench", desc: "Loose orange quartz sand weathered from Entrada sandstone fins, spotted with black crust." },
+    { title: "Delicate Arch Sandstone Slickrock", desc: "Expansive bare sandstone amphitheater holding seasonal rainwater pools and iron concretions." },
+    { title: "Salt Valley Graben Gravels", desc: "Collapsed salt dome valley holding Jurassic agate float, chalcedony flakes, and petrified wood." }
+  ]},
+  { id: "cany", name: "Canyonlands National Park", state: "UT", est: 1964, district: 3, zones: [
+    { title: "Island in the Sky White Rim Bench", desc: "Durable White Rim sandstone overlooking sheer drops into the Green River canyon." },
+    { title: "The Needles Cedar Mesa Wash", desc: "Banded red-and-white sandstone spires shedding coarse feldspar sand and weathered chert." },
+    { title: "Upheaval Dome Impact Ring", desc: "Intensely deformed and shattered rock strata within a mysterious cosmic impact crater." }
+  ]},
+  { id: "care", name: "Capitol Reef National Park", state: "UT", est: 1971, district: 3, zones: [
+    { title: "Waterpocket Fold Sandstone Monocline", desc: "Massive wrinkle in the Earth's crust showing alternating layers of Navajo sandstone and red shale." },
+    { title: "Fremont River Cottonwood Terrace", desc: "Cobble bars of jasper, agate, and volcanic basalt float washed down from high plateaus." },
+    { title: "Sulphur Creek Gypsum Narrows", desc: "Sandstone slot lined with glittering white gypsum veins and cool mineral pools." }
+  ]},
+  { id: "meve", name: "Mesa Verde National Park", state: "CO", est: 1906, district: 3, zones: [
+    { title: "Cliff Canyon Sandstone Alcove", desc: "Sheltered sandstone alcove beneath high overhangs holding 800-year-old ancestral masonry mortar." },
+    { title: "Chapin Mesa Pinyon-Juniper Forest", desc: "Red loess soil mixed with weathered sandstone slabs, ancient corncob desiccates, and juniper berries." },
+    { title: "Rock Springs Arroyo Cut", desc: "Dry watercourse exposing Dakota sandstone gravels and prehistoric chert flaking debitage." }
+  ]},
+  { id: "pefo", name: "Petrified Forest National Park", state: "AZ", est: 1962, district: 3, zones: [
+    { title: "Crystal Forest Chinle Badlands", desc: "Triassic bentonite clay slopes littered with fractured logs of brilliant red, yellow, and purple jasper." },
+    { title: "Blue Mesa Banded Silt Spire", desc: "Striking blue, gray, and purple mudstone benches holding fossilized freshwater clam shells." },
+    { title: "Puerco River Desert Pavement", desc: "Gravel flats of agate chips, iron concretions, and ancient sandstone petroglyph fragments." }
+  ]},
+  { id: "sagu", name: "Saguaro National Park", state: "AZ", est: 1994, district: 3, zones: [
+    { title: "Cactus Forest Granitic Bajada", desc: "Decomposed granite wash framed by giant saguaros, palo verde trees, and cholla cacti." },
+    { title: "Rincon Mountain Gneiss Ridge", desc: "Banded gneiss outcrops overlooking the desert basin, rich in silvery mica sheets." },
+    { title: "Manning Camp Pine Highland", desc: "Cool sky-island ponderosa forest floor holding pine cones, metamorphic float, and pioneer relics." }
+  ]},
+  { id: "grba", name: "Great Basin National Park", state: "NV", est: 1986, district: 3, zones: [
+    { title: "Wheeler Peak Glacial Moraine", desc: "Alpine quartzite boulder field resting below the southernmost active glacier in the Great Basin." },
+    { title: "Ancient Bristlecone Grove Ridge", desc: "Limestone and dolomite scree supporting 4,000-year-old twisted bristlecone pine wood." },
+    { title: "Baker Creek Limestone Wash", desc: "Dry creek gravels of fine-grained Pole Canyon limestone holding calcified marine fossils." }
+  ]},
+  { id: "whsa", name: "White Sands National Park", state: "NM", est: 2019, district: 3, zones: [
+    { title: "Alkali Flat Gypsum Bed", desc: "Dry Pleistocene lakebed surface where brilliant selenite crystals weather into pure white sand." },
+    { title: "Active Crescent Barchan Dunes", desc: "Shifting waves of cool, snow-white gypsum sand ripples shaped by desert winds." },
+    { title: "Playa Margin Mud Crack Basin", desc: "Sun-baked alkaline silt flats holding fossilized ice-age human and mammoth trackways." }
+  ]},
+  { id: "cave", name: "Carlsbad Caverns National Park", state: "AZ", est: 1930, district: 3, zones: [
+    { title: "Big Room Limestone Breakdown", desc: "Vast subterranean chamber holding ancient limestone breakdown blocks and fallen stalactites." },
+    { title: "Slaughter Canyon Desert Arroyo", desc: "Arid limestone canyon mouth filled with lechuguilla, sotol cactus, and marine fossil float." },
+    { title: "Bat Cave Guano Floor Fringe", desc: "Dry organic deposits and floor dust rich in ancient faunal bone fragments and mineral salts." }
+  ]},
+
+  // District 4: Rocky Mountain Spine (6)
+  { id: "yell", name: "Yellowstone National Park", state: "WY", est: 1872, district: 4, zones: [
+    { title: "Norris Geyser Hydrothermal Sinter", desc: "Acidic mineral sinter crusts, vivid thermophilic bacterial mats, and boiling springs." },
+    { title: "Lamar Valley River Alluvium", desc: "Braided river terrace covered in glacial cobbles, shed bison wool, and elk antler sheds." },
+    { title: "Obsidian Cliff Volcanic Apron", desc: "Sheer flows of jet-black volcanic glass; ground littered with lustrous obsidian flakes." }
+  ]},
+  { id: "grte", name: "Grand Teton National Park", state: "WY", est: 1929, district: 4, zones: [
+    { title: "Cascade Canyon Granite Talus", desc: "Towering 2.5-billion-year-old gneiss cliffs flanked by quartzite scree and fir duff." },
+    { title: "Snake River Cobble Island", desc: "Braided riverbeds of quartzite boulders, quartz agates, and cottonwood drift." },
+    { title: "Jenny Lake Glacial Terminal Moraine", desc: "Unsorted glacial debris: sub-rounded granitic cobbles, metamorphic float, and lodgepole cones." }
+  ]},
+  { id: "glac", name: "Glacier National Park", state: "MT", est: 1910, district: 4, zones: [
+    { title: "Grinnell Glacial Cirque Basin", desc: "Turquoise glacial milk lakes bordered by red and green banded Belt mudstone float." },
+    { title: "Logan Pass Alpine Tundra", desc: "Limestone shingle and turf; home to bighorn sheep sign and dwarf alpine forget-me-nots." },
+    { title: "McDonald Creek Red Argillite Bed", desc: "Polished Precambrian argillite stones—deep crimson and jade green—glowing underwater." }
+  ]},
+  { id: "romo", name: "Rocky Mountain National Park", state: "CO", est: 1915, district: 4, zones: [
+    { title: "Loch Vale Glacial Till Basin", desc: "Granite and biotite gneiss boulders scattered across cold subalpine meadows and crystal tarns." },
+    { title: "Trail Ridge Arctic Tundra Mat", desc: "Permafrost polygons, shattered granite frost-heaves, and tiny alpine cushion plants at 12,000 feet." },
+    { title: "Fall River Alluvial Fan", desc: "Coarse gravels and fallen ponderosa timber deposited by historic high-mountain floods." }
+  ]},
+  { id: "wica", name: "Wind Cave National Park", state: "SD", est: 1903, district: 4, zones: [
+    { title: "Boxwork Dolomite Passage Rim", desc: "Rare honeycomb fins of thin calcite spar protruding from weathered limestone cave walls." },
+    { title: "Mixed-Grass Prairie Dog Town", desc: "Mounded clay silt, needle-and-thread grass, and scattered chert gravels along prairie ridges." },
+    { title: "Highland Creek Sandstone Bench", desc: "Exposed purple-red Spearfish shale and sandstone holding marine fossil fragments." }
+  ]},
+  { id: "thro", name: "Theodore Roosevelt National Park", state: "ND", est: 1978, district: 4, zones: [
+    { title: "Little Missouri River Silt Bar", desc: "Braided silt beds cutting through clay bluffs, carrying lignite coal fragments and petrified wood." },
+    { title: "Petrified Forest Plateau", desc: "High prairie plateau littered with ancient stumps of cypress-like trees weathering out of pale silt." },
+    { title: "Bentonite Canyon Badland Coulee", desc: "Popcorn-textured bentonite clay hills striped with burned coal-seam red clinker (scoria)." }
+  ]},
+
+  // District 5: Heartland & Great Lakes (8)
+  { id: "isro", name: "Isle Royale National Park", state: "MI", est: 1940, district: 5, zones: [
+    { title: "Rock Harbor Basalt Amygdule Beach", desc: "Dark Precambrian lava flows bearing amygdules of green chlorastrolite and prehnite." },
+    { title: "Minong Ridge Ancient Copper Pits", desc: "Weathered basalt ridges holding 4,000-year-old indigenous hammered native copper float." },
+    { title: "Boreal Sphagnum Moose Wall", desc: "Deep peat bog surrounded by black spruce and balsam fir, displaying heavy moose tracks." }
+  ]},
+  { id: "voya", name: "Voyageurs National Park", state: "MN", est: 1975, district: 5, zones: [
+    { title: "Kabetogama Lake Gneiss Outcrop", desc: "2.7-billion-year-old Archean gneiss polished smooth by Pleistocene ice sheets." },
+    { title: "Rainy Lake Historic Gold Quartz Vein", desc: "Fractured white quartz float in greenstone bedrock, carrying traces of pyrite and 1890s iron." },
+    { title: "Boreal Beaver Pond Marsh", desc: "Water-soaked tamarack timber, wild rice beds, and soft mud holding gray wolf tracks." }
+  ]},
+  { id: "badl", name: "Badlands National Park", state: "SD", est: 1978, district: 5, zones: [
+    { title: "Brule Formation Siltstone Bench", desc: "Banded pink-and-buff clay layers rich in Oligocene fossil mammal teeth, bone shards, and chalcedony." },
+    { title: "Sod Table Grassland Island", desc: "Relict native mixed-grass prairie caps sitting above eroded mud canyons, holding bison bones." },
+    { title: "Sage Creek Alluvial Gravel Fan", desc: "Sorted river shingle composed of Fairburn agates, jasper pebbles, and calcified mud concretions." }
+  ]},
+  { id: "cuva", name: "Cuyahoga Valley National Park", state: "OH", est: 2000, district: 5, zones: [
+    { title: "Ritchie Ledges Sharon Conglomerate", desc: "Sandstone ledges embedded with white quartz pebbles, coated in cool green moss." },
+    { title: "Ohio & Erie Canal Towpath Silt", desc: "Alluvial river mud holding 19th-century canal boat iron hardware, clay pipes, and square-cut nails." },
+    { title: "Furnace Run Glacial Kame Gravels", desc: "Glacial gravel pits containing granite erratics, Canadian Shield float, and fossil brachiopods." }
+  ]},
+  { id: "indu", name: "Indiana Dunes National Park", state: "IN", est: 2019, district: 5, zones: [
+    { title: "Lake Michigan Quartz Dune Swell", desc: "Shifting sands composed of fine quartz crystals, banded lake agates, and crinoid fossil stems." },
+    { title: "Cowles Bog Peat Margin", desc: "Wetland peat preserving ancient oak leaves, freshwater shells, and native chert flakes." },
+    { title: "Tolleston Beach Paleodune Ridge", desc: "Ancient beach ridge forested in black oak, holding historic pioneer glass and beach drift." }
+  ]},
+  { id: "gaar", name: "Gateway Arch National Park", state: "MO", est: 2018, district: 5, zones: [
+    { title: "Mississippi River Cobble Levee", desc: "Riverfront mud holding 19th-century steamboat coal clinkers, forged iron, and chert." },
+    { title: "Old Courthouse Historic Vault", desc: "Limestone steps and foundation beds holding architectural stone fragments." },
+    { title: "Memorial Riverfront Green Swale", desc: "Deep alluvial silt deposits along the riverbank carrying midwestern gravel float." }
+  ]},
+  { id: "blca", name: "Black Canyon of the Gunnison National Park", state: "CO", est: 1999, district: 5, zones: [
+    { title: "Painted Wall Pegmatite Dike", desc: "Precambrian gneiss sliced by vivid pink microcline feldspar and quartz pegmatite ribbons." },
+    { title: "Gunnison River Boulder Chasm", desc: "White-water gorge lined with polished gneiss and amphibolite boulders." },
+    { title: "North Rim Pinyon Scree Ridge", desc: "Dry quartzitic scree scattered with weathered juniper heartwood and pinyon resin." }
+  ]},
+  { id: "grsd", name: "Great Sand Dunes National Park", state: "CO", est: 2004, district: 5, zones: [
+    { title: "Star Dune Crest Ridge", desc: "750-foot dunes composed of dark volcanic and granitic sand grains carried from the San Juans." },
+    { title: "Medano Creek Surge Channel", desc: "Stream bed exhibiting rhythmic surge waves sorting heavy magnetite sand and quartz." },
+    { title: "Mosca Pass Ponderosa Glade", desc: "Sangre de Cristo mountain foot-slopes holding aspen duff, quartz float, and pioneer trail stones." }
+  ]},
+
+  // District 6: Appalachian & Eastern Seaboard (5)
+  { id: "grsm", name: "Great Smoky Mountains National Park", state: "TN/NC", est: 1934, district: 6, zones: [
+    { title: "Little River Quartzite Creek", desc: "Cold mountain stream rushing over Thunderhead sandstone cobbles and clear quartz pebbles." },
+    { title: "Cades Cove Settler Clearing", desc: "Meadow fringe holding hand-forged 19th-century square nails, horse tackle, and chert points." },
+    { title: "Clingmans Dome Spruceduff Ridge", desc: "Fraser fir needles covering dark moist soil, rich in endemic salamander micro-burrows." }
+  ]},
+  { id: "shen", name: "Shenandoah National Park", state: "VA", est: 1935, district: 6, zones: [
+    { title: "Skyline Drive Greenstone Talus", desc: "Catoctin basalt metamorphosed into greenstone, showing vesicles filled with quartz and epidote." },
+    { title: "Whiteoak Canyon Hemlock Gulch", desc: "Granite ravine floor strewn with rotting hemlock logs, fern fronds, and owl pellets." },
+    { title: "1933 CCC Camp Roosevelt Clearing", desc: "Stone fireplace ruins, rusted tool caches, and hand-cut timber foundations in oak forest." }
+  ]},
+  { id: "acad", name: "Acadia National Park", state: "ME", est: 1919, district: 6, zones: [
+    { title: "Otter Cliff Coarse Cobble Chasm", desc: "Pounded by North Atlantic waves; sorted pink Cadillac Mountain granite cobbles and basalt dikes." },
+    { title: "Jordan Pond Glacial Tarn Shore", desc: "Clear glacial lakebed lined with granite boulders, pitch pine needles, and birch bark curls." },
+    { title: "Sieur de Monts Boreal Peat", desc: "Damp sphagnum wetland carpeted with rhodora, cranberry bogs, and shed porcupine quills." }
+  ]},
+  { id: "maca", name: "Mammoth Cave National Park", state: "KY", est: 1941, district: 6, zones: [
+    { title: "Cleaveland Avenue Gypsum Gallery", desc: "Dry cavern walls blossoming with delicate snow-white gypsum flowers and needles." },
+    { title: "Green River Limestone Bluff", desc: "Limestone cliffs yielding fossil crinoid stems, blastoids, and horn corals." },
+    { title: "1812 Saltpeter Mine Vats", desc: "Dry subterranean silt beds preserving wooden saltpeter pipes and historic tallow marks." }
+  ]},
+  { id: "neri", name: "New River Gorge National Park", state: "WV", est: 2020, district: 6, zones: [
+    { title: "Nuttallburg Coal Mine Bench", desc: "1890s bituminous coal tipple foundations, iron mine cart rails, and Pottsville sandstone." },
+    { title: "Endless Wall Sandstone Overhang", desc: "Sandstone cliff face shedding tough quartz sandstone blocks into hemlock forest." },
+    { title: "New River Boulder Riffle", desc: "Ancient river gravels containing water-smoothed quartz pebbles, flint flakes, and coal pebbles." }
+  ]},
+
+  // District 7: Subtropical Gulf & Caribbean (8)
+  { id: "ever", name: "Everglades National Park", state: "FL", est: 1947, district: 7, zones: [
+    { title: "Shark Valley Marl Prairie", desc: "Sawgrass marsh over calcitic marl mud, holding apple snail shells and gar scales." },
+    { title: "Ten Thousand Islands Mangrove Peat", desc: "Prop-roots of red mangroves anchoring deep organic peat and oyster shell bars." },
+    { title: "Gumbo Limbo Hardwood Hammock", desc: "Elevated limestone outcrop holding subtropical hammock duff and gumbo limbo bark." }
+  ]},
+  { id: "bisc", name: "Biscayne National Park", state: "FL", est: 1980, district: 7, zones: [
+    { title: "Key Largo Fossil Coral Bench", desc: "Pleistocene coral reef rock showing star coral and brain coral skeletons in dry bedrock." },
+    { title: "Arsenic Bank Mangrove Shallows", desc: "Seagrass beds and calcified green algae flats holding storm-tossed sea beans and conch shells." },
+    { title: "Historic Wreck Reef Terrace", desc: "Calcified coral rubble carrying 18th-century brass ship spikes and ballast stones." }
+  ]},
+  { id: "drto", name: "Dry Tortugas National Park", state: "FL", est: 1992, district: 7, zones: [
+    { title: "Fort Jefferson Brick Moat Fringe", desc: "Historic masonry foundations, coral sand, and 19th-century naval artillery hardware." },
+    { title: "Loggerhead Key Storm Shingle", desc: "Coral sand and calcified conch shell fragments tossed up by Gulf hurricanes." },
+    { title: "Pulaski Shoal Ballast Reef", desc: "Shallow reef flat holding Spanish ballast flint cobbles and historic encrusted brass." }
+  ]},
+  { id: "viis", name: "Virgin Islands National Park", state: "VI", est: 1956, district: 7, zones: [
+    { title: "Trunk Bay Carbonate Sand Flat", desc: "Fine white sand formed from pulverized coral and sea urchin spines beneath sea-grapes." },
+    { title: "Annaberg Sugar Mill Ruins", desc: "Coral limestone and Dutch-brick masonry foundations holding copper kettle shards." },
+    { title: "Reef Bay Petroglyph Pool", desc: "Basalt freshwater pool surrounded by pre-Columbian Taino rock carvings." }
+  ]},
+  { id: "hosp", name: "Hot Springs National Park", state: "AR", est: 1921, district: 7, zones: [
+    { title: "Hot Springs Mountain Tufa Terrace", desc: "Porous calcareous tufa deposits formed by geothermal waters rich in calcium carbonate." },
+    { title: "Arkansas Novaculite Quarry Ledge", desc: "Dense microcrystalline quartz stone heavily quarried by indigenous peoples for tools." },
+    { title: "Arlington Lawn Thermal Spring Fringe", desc: "Hot water runoff channels lined with thermophilic algae and historic lead plumbing." }
+  ]},
+  { id: "cong", name: "Congaree National Park", state: "SC", est: 2003, district: 7, zones: [
+    { title: "Cedar Creek Alluvial Mud Flat", desc: "Rich river mud exposed by floodwaters, holding cypress knees and sweetgum seed pods." },
+    { title: "Champion Loblolly Old-Growth Floor", desc: "Forest duff beneath 160-foot pine canopies littered with heavy seed cones." },
+    { title: "Weston Lake Oxbow Bank", desc: "Slackwater channel bed rich in black swamp muck, gar scales, and ancient river logs." }
+  ]},
+  { id: "bibe", name: "Big Bend National Park", state: "TX", est: 1944, district: 7, zones: [
+    { title: "Tornillo Creek Gravel Wash", desc: "Braided dry arroyo gravels rich in translucent plume agates, jasper, and petrified wood." },
+    { title: "Chisos Basin Rhyolite Gulch", desc: "Volcanic peaks shedding red rhyolite boulders into pinyon-juniper canyons." },
+    { title: "Santa Elena Canyon Rio Grande Bench", desc: "Limestone cliffs dropping to silt bars holding Cretaceous fossil shells." }
+  ]},
+  { id: "gumo", name: "Guadalupe Mountains National Park", state: "TX", est: 1972, district: 7, zones: [
+    { title: "Capitan Reef Permian Talus", desc: "Ancient fossil barrier reef rock filled with fossil sponges, bryozoans, and brachiopods." },
+    { title: "McKittrick Canyon Stream Shingle", desc: "Stream bed flowing over white limestone pebbles and maple leaves in a desert oasis." },
+    { title: "Frijole Ranch Pioneer Wash", desc: "Dry gravel flats holding late 19th-century ranching ironware and horseshoe nails." }
+  ]},
+
+  // District 8: Far North & Pacific Territories (12)
+  { id: "dena", name: "Denali National Park", state: "AK", est: 1917, district: 8, zones: [
+    { title: "Stony Creek Glacial Gravels", desc: "Braided riverbed of dark argillite and white granite cobbles sorted by Muldrow Glacier." },
+    { title: "Polychrome Pass Tundra Bench", desc: "Permafrost tundra hummocks dotted with dwarf birch, caribou lichen, and basalt float." },
+    { title: "Thorofare River Silt Flats", desc: "Glacial gray flour mud holding fresh grizzly bear tracks and wolf prints." }
+  ]},
+  { id: "gaar2", name: "Gates of the Arctic National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Alatna River Braided Outwash", desc: "Subarctic river shingle composed of quartzite, chert, and caribou antler sheds." },
+    { title: "Arrigetch Peaks Granite Scree", desc: "Jagged granitic spires shedding coarse feldspar talus into damp lichen beds." },
+    { title: "Anaktuvuk Permafrost Hummock", desc: "Thawing peat polygons exposing ice-wedge casts and Pleistocene bone fragments." }
+  ]},
+  { id: "katm", name: "Katmai National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Valley of Ten Thousand Smokes Tuff", desc: "Vast desert of rhyolitic ash and welded pumice laid down in the 1912 Novarupta eruption." },
+    { title: "Brooks River Salmon Riffle", desc: "Gravel beds holding sockeye salmon remains, river agates, and heavy brown bear fur." },
+    { title: "Naknek Lake Volcanic Shingle", desc: "Storm-washed basaltic pebble beaches littered with floating pumice stones." }
+  ]},
+  { id: "kefj", name: "Kenai Fjords National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Exit Glacier Outwash Plain", desc: "Moraine till and pulverized rock flour exposed by the receding glacier toe." },
+    { title: "Aialik Bay Sea-Cliff Talus", desc: "Slate scree dropping directly into cold fjord waters, dusted with spruce needles." },
+    { title: "Harding Icefield Nunatak Edge", desc: "Wind-lashed metamorphic crest rising above hundreds of square miles of glacier ice." }
+  ]},
+  { id: "kova", name: "Kobuk Valley National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Great Kobuk Sand Dunes", desc: "100-foot dunes of golden periglacial sand surrounded by boreal forest and tundra." },
+    { title: "Kobuk River Permafrost Cutbank", desc: "Thawing mud bluff exposing frozen peat, ice-age willow, and fossil megafauna." },
+    { title: "Onion Portage Alluvial Shingle", desc: "Ancient 9,000-year-old caribou crossing gravels holding prehistoric chert flakes." }
+  ]},
+  { id: "lacl", name: "Lake Clark National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Chinitna Bay Tidal Silt Flats", desc: "Gray coastal mudflats rich in clam shells and coastal brown bear trails." },
+    { title: "Tanalian Mountain Rhyolite Talus", desc: "Volcanic talus slopes holding andesite, jasper veins, and shed porcupine quills." },
+    { title: "Curran Creek Glacial Gravels", desc: "Mountain stream sorting granite boulders and quartz pebbles through birch stands." }
+  ]},
+  { id: "glba", name: "Glacier Bay National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Muir Inlet Post-Glacial Moraine", desc: "Unsorted till holding granitic erratics, fossil wood from buried forests, and moss." },
+    { title: "Tarr Inlet Slate Beach", desc: "Slate shingle washed by icebergs calved from the Grand Pacific Glacier." },
+    { title: "Bartlett Cove Rainforest Sponge", desc: "Coastal temperate rainforest floor: spongy peat moss, hemlock cones, and eagle feathers." }
+  ]},
+  { id: "wrst", name: "Wrangell–St. Elias National Park", state: "AK", est: 1980, district: 8, zones: [
+    { title: "Kennecott Copper Mine Moraine", desc: "1910s copper mill tailings yielding massive malachite, azurite, and chalcocite float." },
+    { title: "Root Glacier Lateral Ridge", desc: "Steep gravel ridge composed of black volcanic basalt and glacier ice lenses." },
+    { title: "Nizina River Silt Bar", desc: "Braided river valley carrying native copper nuggets and polished limestone pebbles." }
+  ]},
+  { id: "havo", name: "Hawaiʻi Volcanoes National Park", state: "HI", est: 1916, district: 8, zones: [
+    { title: "Kīlauea Iki Basaltic Crater Floor", desc: "Cracked slabs of pooled lava, steaming fracture vents, and golden Pele’s hair." },
+    { title: "Chain of Craters Pāhoehoe Flow", desc: "Ropy black basalt lava with iridescent glassy crusts and olivine crystals." },
+    { title: "ʻŌhiʻa Rainforest Ash Layer", desc: "Lush fern forest growing in tephra, carpeted with red ʻōhiʻa lehua blossoms." }
+  ]},
+  { id: "hale", name: "Haleakalā National Park", state: "HI", est: 1916, district: 8, zones: [
+    { title: "Haleakalā Cinder Crater Desert", desc: "Cinder cone amphitheater of deep red, purple, and ochre basaltic cinders." },
+    { title: "Silversword Ridge Lava Rim", desc: "Barren volcanic ridge sheltering rare shimmering Haleakalā silversword plants." },
+    { title: "Kīpahulu Bamboo Stream Shingle", desc: "Coastal gorge bed lined with polished basalt river stones and bamboo leaves." }
+  ]},
+  { id: "npsa", name: "National Park of American Samoa", state: "AS", est: 1988, district: 8, zones: [
+    { title: "Ofu Island Coral Sand Terrace", desc: "White carbonate sand littered with branching staghorn coral rubble and cowrie shells." },
+    { title: "Tutuila Volcanic Ridge Rainforest", desc: "Rainforest slopes holding black basalt float, giant tree ferns, and flying fox signs." },
+    { title: "Pola Island Sea-Stack Shore", desc: "Crashing Pacific surf against basalt breccia cliffs and water-worn cobbles." }
+  ]},
+  { id: "chin", name: "Channel Islands National Park", state: "CA", est: 1980, district: 8, zones: [
+    { title: "San Miguel Caliche Forest Bluff", desc: "Fossilized sand dune casts of ancient tree trunks (caliche) exposed by ocean gales." },
+    { title: "Santa Cruz Island Monterey Shale", desc: "Brittle layered white shale holding fossil fish scales and endemic island fox tracks." },
+    { title: "Anacapa Volcanic Wave-Cut Bench", desc: "Basaltic lava ledges covered in sea spray, salt crusts, and shell midden fragments." }
+  ]}
+];
+
+// ============================================================================
+// 2. MASTER SPECIMENS & CROWN JEWELS (TIER 1 - 5)
+// ============================================================================
+const MASTER_SPECIMENS = [
+  // CROWN JEWELS (Tier V: $1.2M - $8.5M+)
+  {
+    id: "KOVA_TUSK",
+    parkId: "kova",
+    name: "The Cerulean Vivianite Mammoth Tusk",
+    tier: 5,
+    baseVal: 3400000,
+    cat: "Paleontological Holotype",
+    era: "Late Pleistocene (~24,000 BP)",
+    mat: "Ivory replaced with vivianite crystal (Fe3(PO4)2·8H2O)",
+    desc: "An 11.5-foot, fully intact mammoth tusk weathered out from permafrost. Decades of iron-phosphate saturation have crystallized the outer ivory sheath into brilliant, iridescent cobalt-blue vivianite. Pristine museum holotype."
+  },
+  {
+    id: "YELL_CLOVIS",
+    parkId: "yell",
+    name: "The Obsidian Cliff Clovis Cache",
+    tier: 5,
+    baseVal: 4800000,
+    cat: "Lithic Cultural Relic",
+    era: "Paleoindian (~13,000 BP)",
+    mat: "Translucent jet-black volcanic glass",
+    desc: "A cache of nine pristine fluted Clovis points bedded in hydrothermal gravels. Miraculously preserved with trace birch-tar hafting residue. A cornerstone of North American human archaeology."
+  },
+  {
+    id: "DRTO_ASTROLABE",
+    parkId: "drto",
+    name: "1622 Royal Spanish Fleet Astrolabe",
+    tier: 5,
+    baseVal: 2900000,
+    cat: "Historical Maritime Relic",
+    era: "Spanish Colonial (1622 CE)",
+    mat: "Cast sea-patinated maritime brass",
+    desc: "Recovered from calcified reef rubble. Inscribed with the royal seal of Philip IV, this mariner's astrolabe belonged to the navigation officer of the lost galleon Nuestra Señora de Atocha. Unbroken alidade sighting arm."
+  },
+  {
+    id: "BADL_DINICTIS",
+    parkId: "badl",
+    name: "Articulated Dinictis Saber-Cat Skull",
+    tier: 5,
+    baseVal: 3600000,
+    cat: "Paleontological Masterwork",
+    era: "Oligocene (~30 Million Years)",
+    mat: "Chalcedony-infilled fossil bone",
+    desc: "A museum-grade articulated skull of the false saber-toothed cat Dinictis squalidens. Both four-inch serrated sabers remain anchored in their sockets without crushing or distortion."
+  },
+  {
+    id: "YOSE_WATKINS",
+    parkId: "yose",
+    name: "Carleton Watkins' 1861 Mammoth-Plate Trunk",
+    tier: 5,
+    baseVal: 2200000,
+    cat: "Historical Archival Treasure",
+    era: "Pioneer Photography (1861 CE)",
+    mat: "Wet-plate collodion on glass / zinc-lined cedar",
+    desc: "A sealed cedar field case containing six uncracked 18x22-inch mammoth-plate collodion negatives documenting Yosemite Valley before European settlement. Intact archival silver image layers."
+  },
+
+  // TIER 4: MUSEUM-GRADE MASTERWORKS ($65,000 - $450,000)
+  {
+    id: "GRCA_TRILO",
+    parkId: "grca",
+    name: "Holotypic Olenellus Trilobite Plate",
+    tier: 4,
+    baseVal: 185000,
+    cat: "Paleontological Masterwork",
+    era: "Lower Cambrian (~515 Million Years)",
+    mat: "Bright Angel Green Shale",
+    desc: "A death-assemblage slab holding seven complete, uncrushed Olenellus trilobites with preserved delicate antenna impressions and spine fringes."
+  },
+  {
+    id: "ISRO_INGOT",
+    parkId: "isro",
+    name: "Archaic Annealed Native Copper Adze",
+    tier: 4,
+    baseVal: 240000,
+    cat: "Lithic / Metallurgical Relic",
+    era: "Old Copper Culture (~3,500 BCE)",
+    mat: "99.9% pure Keweenawan copper",
+    desc: "Cold-hammered and repeatedly annealed heavy copper adze blade. Exhibits rhythmic smithing bevels and light malachite encrustation."
+  },
+  {
+    id: "MEVE_POT",
+    parkId: "meve",
+    name: "Mesa Verde Black-on-White Storage Olla",
+    tier: 4,
+    baseVal: 320000,
+    cat: "Ancestral Puebloan Ceramic",
+    era: "Pueblo III Era (~1225 CE)",
+    mat: "Crushed rock-tempered clay with organic slip",
+    desc: "Recovered undisturbed from a dry alcove niche. Intact globular jar bearing geometric stepped fretwork and intact yucca-fiber lug handles."
+  },
+  {
+    id: "WRST_NUGGET",
+    parkId: "wrst",
+    name: "The Nizina River Native Copper Boulder",
+    tier: 4,
+    baseVal: 290000,
+    cat: "Mineralogical Masterpiece",
+    era: "Precambrian Hydrothermal",
+    mat: "Native Copper with Malachite and Cuprite",
+    desc: "A 48-pound water-smoothed boulder of pure native copper washed from high greenstone lodes. Glacial striations cut through emerald malachite skin."
+  },
+
+  // TIER 3: RARE STRATIGRAPHIC & HISTORIC ($5,000 - $45,000)
+  {
+    id: "SHEN_BLAST",
+    parkId: "shen",
+    name: "1933 Civilian Conservation Corps Blasting Box",
+    tier: 3,
+    baseVal: 16500,
+    cat: "Historical Forestry Relic",
+    era: "New Deal Era (1933 CE)",
+    mat: "Oak, brass terminals, and vulcanized rubber",
+    desc: "Hand-cranked dynamo blasting machine used by CCC Company 354 during the dry-stone wall construction of Skyline Drive. Stenciled NPS insignias."
+  },
+  {
+    id: "MACA_LANTERN",
+    parkId: "maca",
+    name: "Stephen Bishop's Lard-Oil Field Lantern",
+    tier: 3,
+    baseVal: 32000,
+    cat: "Historical Speleological Relic",
+    era: "Antebellum Exploration (1845 CE)",
+    mat: "Sheet tin with pierced air holes",
+    desc: "Carried by legendary guide Stephen Bishop during his first historic transit of Bottomless Pit. Base inscribed with scratched initial 'S.B.'"
+  },
+  {
+    id: "BIBE_AGATE",
+    parkId: "bibe",
+    name: "Tornillo Creek Carnelian Plume Agate",
+    tier: 3,
+    baseVal: 18500,
+    cat: "Mineral Specimen",
+    era: "Eocene Volcanic (~40 Million Years)",
+    mat: "Cryptocrystalline Quartz (Mohs 7)",
+    desc: "A fist-sized nodule of translucent chalcedony hosting vibrant scarlet and black plume plumes floating in water-clear silica."
+  },
+  {
+    id: "ZION_POINT",
+    parkId: "zion",
+    name: "Virgin River Corner-Notched Chert Dart Point",
+    tier: 3,
+    baseVal: 26000,
+    cat: "Archaic Lithic Point",
+    era: "Late Archaic (~800 BCE)",
+    mat: "Navajo Shinarump chert",
+    desc: "Exquisite pressure-flaked projectile point exhibiting expanding stem notches and razor-sharp serrations without field damage."
+  },
+
+  // TIER 2: DIAGNOSTIC FIELD SPECIMENS ($600 - $3,500)
+  {
+    id: "GLAC_ARGILLITE",
+    parkId: "glac",
+    name: "Precambrian Stromatolite Argillite Float",
+    tier: 2,
+    baseVal: 1450,
+    cat: "Paleontological Float",
+    era: "Mesoproterozoic (~1.4 Billion Years)",
+    mat: "Siliceous Argillite (Belt Supergroup)",
+    desc: "A river-polished green argillite pebble displaying fine concentric laminations created by ancient cyanobacterial colonies."
+  },
+  {
+    id: "PEFO_LOG",
+    parkId: "pefo",
+    name: "Chinle Jasperized Araucarioxylon Section",
+    tier: 2,
+    baseVal: 2200,
+    cat: "Silicified Paleobotanical Wood",
+    era: "Late Triassic (~218 Million Years)",
+    mat: "Carnelian & Jasper silica replacement",
+    desc: "A five-inch complete cylinder of fossilized wood displaying microscopic cell walls and growth rings replaced with brilliant scarlet jasper."
+  },
+  {
+    id: "EVER_SHELL",
+    parkId: "ever",
+    name: "Calusa Shell Gouge Tool",
+    tier: 2,
+    baseVal: 1850,
+    cat: "Indigenous Shell Implement",
+    era: "Glades Culture (~900 CE)",
+    mat: "Robust Lightning Whelk (Sinistrofulgur perversum)",
+    desc: "Fashioned from the thick columella of a large whelk shell, exhibiting a ground beveled cutting edge used for carving dugout cypress canoes."
+  },
+  {
+    id: "HAVO_PELE",
+    parkId: "havo",
+    name: "Golden Pele's Hair Filament Cluster",
+    tier: 2,
+    baseVal: 1100,
+    cat: "Volcanological Glass Specimen",
+    era: "Modern Eruptive (~1959 CE)",
+    mat: "Basaltic pyroclastic glass fiber",
+    desc: "Delicate golden threads of drawn volcanic glass created by gas bubbles bursting through molten lava fountains. Brittle and luminous."
+  }
+];
+
+const PROCEDURAL_TYPES = [
+  { prefix: "River-Polished", name: "Banded Lake Agate", cat: "Mineral Specimen", baseVal: 450, tier: 1 },
+  { prefix: "Glacial Till", name: "Striated Granodiorite Cobble", cat: "Petrological Float", baseVal: 120, tier: 1 },
+  { prefix: "Weathered", name: "Petrified Palm Wood Sliver", cat: "Fossil Paleobotany", baseVal: 750, tier: 2 },
+  { prefix: "High-Calibre", name: "Chert Scraper on Flake", cat: "Lithic Tool Float", baseVal: 1450, tier: 2 },
+  { prefix: "Desiccated", name: "Ancient Ponderosa Cone Cluster", cat: "Botanical Herbarium", baseVal: 85, tier: 1 },
+  { prefix: "Subalpine", name: "Shed Elk Antler Crown", cat: "Faunal Track & Sign", baseVal: 950, tier: 2 },
+  { prefix: "19th-Century", name: "Square-Cut Forged Iron Timber Spike", cat: "Pioneer Relic", baseVal: 320, tier: 1 }
+];
+
+const FLAVOR_OBSERVATIONS = [
+  "You scan the gravel matrix centimeter by centimeter. Midday sunlight glints off common quartz grains, but recent flash floods have shifted the fine silt.",
+  "A cool mountain breeze moves through the timber. You sift two scoops of sorted river gravel—only well-rounded country rock and granite pebbles.",
+  "You inspect a fresh erosion shelf with your hand lens. The soil shows clean strata, but no cultural debitage or fossil horizons are exposed here today.",
+  "A raven's call echoes across the canyon. You carefully turn over several heavy shale slabs; only barren slate and damp rootlets lie beneath.",
+  "You glass the high scree apron through your optics. The light angle is sharp, revealing loose talus frost-heaves without diagnostic mineral veins."
+];
+
+// ============================================================================
+// 3. GLOBAL BIDDERS & AUCTION INSTITUTIONS
+// ============================================================================
+const BIDDER_DIRECTORY = [
+  { name: "Smithsonian Institution (NMNH)", focus: ["Lithic", "Paleontological", "Historical"], budget: 35000000 },
+  { name: "Natural History Museum (London)", focus: ["Mineral", "Paleontological"], budget: 28000000 },
+  { name: "The Getty Research Institute", focus: ["Historical Archival", "Pioneer"], budget: 45000000 },
+  { name: "Field Museum of Natural History", focus: ["Paleontological", "Faunal"], budget: 30000000 },
+  { name: "Peabody Museum of Archaeology", focus: ["Lithic", "Ancestral", "Indigenous"], budget: 22000000 },
+  { name: "American Museum of Natural History", focus: ["Paleontological", "Crown Jewel"], budget: 40000000 },
+  { name: "The Hans Sloane Heritage Trust", focus: ["Crown Jewel", "Masterwork"], budget: 75000000 },
+  { name: "Muséum National d'Histoire Naturelle (Paris)", focus: ["Botanical", "Fossil"], budget: 20000000 },
+  { name: "Regional State Historical Society", focus: ["Pioneer", "Historical"], budget: 3500000 },
+  { name: "United States Geological Survey", focus: ["Mineral", "Petrological"], budget: 2500000 }
+];
+
+// ============================================================================
+// 4. OUTFITTER GEAR CATALOG
+// ============================================================================
+const OUTFITTER_GEAR = [
+  { id: "gear_lens", name: "10x Hastings Triplet Hand Lens", price: 450, desc: "+10% discovery appraisal bonus via precise grain inspection." },
+  { id: "gear_brush", name: "Camelhair Field Dusting Brush", price: 180, desc: "Eliminates condition penalties when lifting delicate relics from clay." },
+  { id: "gear_calipers", name: "Brass Vernier Measuring Calipers", price: 950, desc: "Adds verified dimensional provenance records to auction lots (+15% bid pace)." },
+  { id: "gear_loupe", name: "Zeiss 20x Dual-Illumination Loupe", price: 3200, desc: "+15% find rate on high-grade lithics and mineral crystals." },
+  { id: "gear_optics", name: "Nikon ED FieldScope Glassing Rig", price: 18500, desc: "Unlocks high-talus scree scanning with doubled rare discovery chances." },
+  { id: "gear_xrf", name: "Handheld XRF Elemental Mineral Analyzer", price: 75000, desc: "Instant certified chemical assay. Unlocks top-bracket bids for mineral specimens." },
+  { id: "gear_plane", name: "De Havilland DHC-2 Beaver Floatplane", price: 850000, desc: "Permanent FREE travel to all Far North, Alaska, and Pacific territory parks." },
+  { id: "gear_trailer", name: "Mobile Solar Field Laboratory Rig", price: 1500000, desc: "Host on-site Archival Consortium auctions directly from the backcountry." }
+];
+
+// ============================================================================
+// 5. GAME STATE
+// ============================================================================
+let state = {
+  homeDistrict: 3, // Southwest
+  currentParkId: "zion", // Zion National Park
+  currentZoneIndex: 0,
+  funds: 1250,
+  bag: [],
+  catalog: {},
+  conservancy: {},
+  gear: {},
+  stats: { combed: 0, finds: 0, auctionsWon: 0, clashes: 0, graded: 0, authenticated: 0 }
+};
+
+let activeAuction = {
+  running: false,
+  item: null,
+  highBid: 0,
+  highBidder: "",
+  clashActive: false,
+  stepCount: 0
+};
+
+function loadGame() {
+  const saved = localStorage.getItem("living_archive_save_v2");
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e) { console.error("Save load error", e); }
+  }
+  updateStatusBar();
+}
+
+function saveGame() {
+  localStorage.setItem("living_archive_save_v2", JSON.stringify(state));
+}
+
+// ============================================================================
+// 6. UI VIEW MANAGEMENT
+// ============================================================================
+function switchView(panelId) {
+  document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active-panel"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(panelId).classList.add("active-panel");
+  
+  const navBtns = document.querySelectorAll(".nav-btn");
+  navBtns.forEach(btn => {
+    if (btn.getAttribute("onclick").includes(panelId)) btn.classList.add("active");
+  });
+
+  if (panelId === 'view-combing') renderCombingView();
+  if (panelId === 'view-inventory') renderPackView('bag');
+  if (panelId === 'view-lab') renderLabView();
+  if (panelId === 'view-auction') setupAuctionConsignSelect();
+  if (panelId === 'view-outfitter') renderOutfitterView();
+  if (panelId === 'view-conservancy') renderConservancyView();
+  if (panelId === 'view-atlas') renderAtlasView();
+}
+
+function updateStatusBar() {
+  const park = ALL_PARKS.find(p => p.id === state.currentParkId) || ALL_PARKS[0];
+  const dist = DISTRICTS[park.district];
+  document.getElementById("bar-park").innerText = park.name;
+  document.getElementById("bar-district").innerText = dist.name;
+  document.getElementById("bar-funds").innerText = "$" + state.funds.toLocaleString();
+  document.getElementById("bar-bag").innerText = state.bag.length + " in pack";
+  
+  const totalDonated = Object.values(state.conservancy).reduce((a,b) => a+b, 0);
+  document.getElementById("bar-donations").innerText = "$" + totalDonated.toLocaleString();
+}
+
+// Helper to compute effective item value with grading & authentication
+function getItemAppraisal(item) {
+  let val = Math.round(item.baseVal * 1.5); // 50% rescaled baseline
+  if (item.gradeMultiplier) val = Math.round(val * item.gradeMultiplier);
+  if (item.authenticated) val = Math.round(val * 1.40); // +40% certification boost
+  return val;
+}
+
+// ============================================================================
+// 7. COMBING & DISCOVERY
+// ============================================================================
+function renderCombingView() {
+  updateStatusBar();
+  const park = ALL_PARKS.find(p => p.id === state.currentParkId);
+  document.getElementById("comb-park-title").innerText = park.name.toUpperCase();
+  document.getElementById("comb-park-meta").innerText = 
+    `STATE: ${park.state} | ESTABLISHED: ${park.est} | SURVEY DISTRICT: ${DISTRICTS[park.district].name.toUpperCase()}`;
+
+  const select = document.getElementById("zone-selector");
+  select.innerHTML = "";
+  park.zones.forEach((z, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.innerText = z.title;
+    if (i === state.currentZoneIndex) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  changeZone();
+}
+
+function changeZone() {
+  const park = ALL_PARKS.find(p => p.id === state.currentParkId);
+  const zIdx = parseInt(document.getElementById("zone-selector").value) || 0;
+  state.currentZoneIndex = zIdx;
+  document.getElementById("zone-description").innerText = park.zones[zIdx].desc;
+  saveGame();
+}
+
+function combLandscape(actionType) {
+  state.stats.combed++;
+  const park = ALL_PARKS.find(p => p.id === state.currentParkId);
+  const log = document.getElementById("discovery-log");
+  
+  let findChance = 0.40;
+  if (state.gear["gear_loupe"]) findChance += 0.15;
+  if (state.gear["gear_optics"] && actionType === 'scree') findChance += 0.25;
+
+  const roll = Math.random();
+
+  if (roll < findChance) {
+    state.stats.finds++;
+    if (!state.catalog[park.id]) state.catalog[park.id] = [];
+    const availableMasters = MASTER_SPECIMENS.filter(m => m.parkId === park.id && !state.catalog[park.id].includes(m.id));
+
+    let foundSpecimen = null;
+
+    if (availableMasters.length > 0 && Math.random() < 0.35) {
+      foundSpecimen = JSON.parse(JSON.stringify(availableMasters[Math.floor(Math.random() * availableMasters.length)]));
+      state.catalog[park.id].push(foundSpecimen.id);
+    } else {
+      const baseProto = PROCEDURAL_TYPES[Math.floor(Math.random() * PROCEDURAL_TYPES.length)];
+      foundSpecimen = {
+        id: "PROC_" + Date.now(),
+        parkId: park.id,
+        name: `${baseProto.prefix} ${baseProto.name}`,
+        tier: baseProto.tier,
+        baseVal: Math.round(baseProto.baseVal * (0.85 + Math.random() * 0.45)),
+        cat: baseProto.cat,
+        era: "Quaternary Alluvial Float",
+        mat: "Natural Matrix Cobble",
+        desc: `Recovered while conducting a ${actionType} survey within ${park.zones[state.currentZoneIndex].title}. Clean specimen bedded in local sediment.`
+      };
+    }
+
+    // Default ungraded & unauthenticated
+    foundSpecimen.grade = null;
+    foundSpecimen.gradeMultiplier = 1.0;
+    foundSpecimen.authenticated = false;
+
+    state.bag.push(foundSpecimen);
+    saveGame();
+    updateStatusBar();
+
+    const curVal = getItemAppraisal(foundSpecimen);
+
+    log.innerHTML = `
+      <div class="accession-card">
+        <div class="accession-header">
+          UNITED STATES NATIONAL PARK SERVICE | DIVISION OF CULTURAL &amp; NATURAL RESOURCES<br>
+          FORM 10-42 ACCESSION LOG &bull; NEW SPECIMEN RECOVERED IN-SITU
+        </div>
+        <div class="accession-row"><strong>SPECIMEN:</strong> ${foundSpecimen.name} (${foundSpecimen.cat})</div>
+        <div class="accession-row"><strong>LOCALITY:</strong> ${park.name} &mdash; ${park.zones[state.currentZoneIndex].title}</div>
+        <div class="accession-row"><strong>STRATIGRAPHY / ERA:</strong> ${foundSpecimen.era}</div>
+        <div class="accession-row"><strong>ESTIMATED BASE VALUE:</strong> $${curVal.toLocaleString()} (Tier ${foundSpecimen.tier})</div>
+        <div class="accession-desc">
+          <strong>FIELD NATURALIST NOTES:</strong> ${foundSpecimen.desc}
+        </div>
+        <div style="margin-top:10px; font-size:0.82rem; color:var(--accent-green); font-weight:bold;">
+          [ SPECIMEN STOWED IN PACK &bull; VISIT THE CURATORIAL LAB TO GRADE OR AUTHENTICATE ]
+        </div>
+      </div>
+    `;
+  } else {
+    const note = FLAVOR_OBSERVATIONS[Math.floor(Math.random() * FLAVOR_OBSERVATIONS.length)];
+    log.innerHTML = `
+      <div style="background:#fff; border:1px dashed var(--border-color); padding:12px; font-style:italic; line-height:1.5;">
+        ${note}
+      </div>
+    `;
+  }
+}
+
+// ============================================================================
+// 8. SPECIMEN BAG & LEDGER
+// ============================================================================
+function renderPackView(subTab) {
+  document.getElementById("pack-bag-count").innerText = state.bag.length;
+  let totalCataloged = 0;
+  Object.values(state.catalog).forEach(arr => totalCataloged += arr.length);
+  document.getElementById("pack-archive-count").innerText = totalCataloged;
+
+  const container = document.getElementById("pack-content-area");
+  container.innerHTML = "";
+
+  if (subTab === 'bag') {
+    if (state.bag.length === 0) {
+      container.innerHTML = `<div style="padding:20px; text-align:center; font-style:italic;">Your pack is empty. Head to the field to comb for float and relics!</div>`;
+      return;
+    }
+
+    state.bag.forEach((item, index) => {
+      const curVal = getItemAppraisal(item);
+      const card = document.createElement("div");
+      card.className = "accession-card";
+      card.innerHTML = `
+        <div class="accession-header" style="display:flex; justify-content:space-between;">
+          <span>PACK LOT #${index + 1} &bull; TIER ${item.tier} SPECIMEN</span>
+          <div>
+            ${item.grade ? `<span class="stamp stamp-gold" style="margin-right:4px;">GRADE: ${item.grade} (${item.gradeMultiplier}x)</span>` : ''}
+            ${item.authenticated ? `<span class="stamp stamp-blue">AUTHENTICATED (+40%)</span>` : ''}
+          </div>
+        </div>
+        <div class="accession-row"><strong>${item.name}</strong> &mdash; ${item.cat}</div>
+        <div class="accession-row">Certified Appraisal Value: <strong>$${curVal.toLocaleString()}</strong></div>
+        <div class="accession-desc">${item.desc}</div>
+        <div style="margin-top:10px;">
+          <button class="action-btn" onclick="directItemToLab(${index})">Take to Curatorial Lab</button>
+          <button class="action-btn" onclick="directItemToAuction(${index})">Consign to Archival Auction</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } else {
+    container.innerHTML = `<h3 style="margin-bottom:10px; font-size:1.1rem;">Permanent Archival Accession Records</h3>`;
+    MASTER_SPECIMENS.forEach(spec => {
+      const park = ALL_PARKS.find(p => p.id === spec.parkId);
+      const isLogged = state.catalog[spec.parkId] && state.catalog[spec.parkId].includes(spec.id);
+      
+      const itemRow = document.createElement("div");
+      itemRow.className = "item-row";
+      itemRow.innerHTML = `
+        <div>
+          <strong>${spec.name}</strong> (${park.name})<br>
+          <span style="font-size:0.8rem; color:var(--text-muted);">${spec.cat} &bull; Tier ${spec.tier}</span>
+        </div>
+        <div>
+          ${isLogged ? '<span class="stamp">DOCUMENTED</span>' : '<span style="font-size:0.8rem; color:#888;">UNSURVEYED</span>'}
+        </div>
+      `;
+      container.appendChild(itemRow);
+    });
+  }
+}
+
+function directItemToLab(bagIndex) {
+  switchView('view-lab');
+  const sel = document.getElementById("lab-item-select");
+  sel.value = bagIndex;
+  updateLabPreview();
+}
+
+function directItemToAuction(bagIndex) {
+  const item = state.bag.splice(bagIndex, 1)[0];
+  switchView('view-auction');
+  startConsignmentWithItem(item);
+}
+
+// ============================================================================
+// 9. CURATORIAL LAB: GRADING & AUTHENTICATION SERVICES
+// ============================================================================
+function renderLabView() {
+  updateStatusBar();
+  const sel = document.getElementById("lab-item-select");
+  sel.innerHTML = "";
+
+  if (state.bag.length === 0) {
+    const opt = document.createElement("option");
+    opt.innerText = "No specimens in pack";
+    sel.appendChild(opt);
+    document.getElementById("lab-active-area").style.display = "none";
+    return;
+  }
+
+  state.bag.forEach((it, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.innerText = `${it.name} (Tier ${it.tier})`;
+    sel.appendChild(opt);
+  });
+
+  document.getElementById("lab-active-area").style.display = "block";
+  updateLabPreview();
+}
+
+function updateLabPreview() {
+  const sel = document.getElementById("lab-item-select");
+  const idx = parseInt(sel.value);
+  if (isNaN(idx) || !state.bag[idx]) return;
+
+  const item = state.bag[idx];
+  const curVal = getItemAppraisal(item);
+
+  // Fee calculation: Grading = 5% of base value (min $25); Auth = 8% of base value (min $50)
+  const gradeFee = Math.max(25, Math.round(item.baseVal * 0.05));
+  const authFee = Math.max(50, Math.round(item.baseVal * 0.08));
+
+  document.getElementById("lab-grade-fee").innerText = "$" + gradeFee.toLocaleString();
+  document.getElementById("lab-auth-fee").innerText = "$" + authFee.toLocaleString();
+
+  const card = document.getElementById("lab-specimen-card");
+  card.innerHTML = `
+    <div class="accession-header" style="display:flex; justify-content:space-between;">
+      <span>CURATORIAL DOSSIER: ${item.name}</span>
+      <div>
+        ${item.grade ? `<span class="stamp stamp-gold" style="margin-right:4px;">GRADE: ${item.grade} (${item.gradeMultiplier}x)</span>` : '<span style="color:#777; font-size:0.75rem;">[ UNGRADED ]</span>'}
+        ${item.authenticated ? `<span class="stamp stamp-blue">CERTIFIED GENUINE (+40%)</span>` : '<span style="color:#777; font-size:0.75rem; margin-left:4px;">[ UNVERIFIED ]</span>'}
+      </div>
+    </div>
+    <div class="accession-row"><strong>CATEGORY:</strong> ${item.cat} | <strong>ERA:</strong> ${item.era}</div>
+    <div class="accession-row"><strong>CURRENT CERTIFIED APPRAISAL:</strong> $${curVal.toLocaleString()}</div>
+    <div class="accession-desc">${item.desc}</div>
+  `;
+
+  // Disable button if already completed
+  const btnGrade = document.getElementById("btn-do-grade");
+  const btnAuth = document.getElementById("btn-do-auth");
+
+  if (item.grade) {
+    btnGrade.disabled = true;
+    btnGrade.innerText = `Graded: ${item.grade}`;
+  } else {
+    btnGrade.disabled = false;
+    btnGrade.innerText = `Submit for Official Grading ($${gradeFee.toLocaleString()})`;
+  }
+
+  if (item.authenticated) {
+    btnAuth.disabled = true;
+    btnAuth.innerText = "Certified Genuine";
+  } else {
+    btnAuth.disabled = false;
+    btnAuth.innerText = `Perform Authentication Assay ($${authFee.toLocaleString()})`;
+  }
+
+  document.getElementById("lab-result-log").innerHTML = "";
+}
+
+function executeGrading() {
+  const sel = document.getElementById("lab-item-select");
+  const idx = parseInt(sel.value);
+  const item = state.bag[idx];
+  if (!item || item.grade) return;
+
+  const gradeFee = Math.max(25, Math.round(item.baseVal * 0.05));
+  if (state.funds < gradeFee) {
+    alert("Insufficient funds to pay the Consortium grading fee!");
+    return;
+  }
+
+  state.funds -= gradeFee;
+  state.stats.graded++;
+
+  // Determine grade based on random roll + gear
+  const roll = Math.random();
+  let gradeName = "Fine";
+  let mult = 1.25;
+
+  if (roll < 0.20) {
+    gradeName = "Good-VG";
+    mult = 1.10;
+  } else if (roll < 0.55) {
+    gradeName = "Very Fine-35";
+    mult = 1.45;
+  } else if (roll < 0.85) {
+    gradeName = "Mint State-65";
+    mult = 1.85;
+  } else {
+    gradeName = "Pristine Gem-70";
+    mult = 2.50;
+  }
+
+  item.grade = gradeName;
+  item.gradeMultiplier = mult;
+
+  saveGame();
+  updateStatusBar();
+  updateLabPreview();
+
+  const newAppraisal = getItemAppraisal(item);
+  document.getElementById("lab-result-log").innerHTML = `
+    <div style="background:#fffcf2; border:2px solid var(--accent-gold); padding:12px; font-family:var(--font-mono); font-size:0.85rem;">
+      <strong style="color:var(--accent-gold);">[ CONSORTIUM GRADING CERTIFICATE ISSUED ]</strong><br>
+      High-power stereomicroscopy reveals pristine edge retention and intact patina.<br>
+      OFFICIAL ASSIGNED GRADE: <strong>${gradeName}</strong> &bull; MULTIPLIER: <strong>${mult}x</strong><br>
+      NEW CERTIFIED LOT APPRAISAL: <strong>$${newAppraisal.toLocaleString()}</strong>
+    </div>
+  `;
+}
+
+function executeAuthentication() {
+  const sel = document.getElementById("lab-item-select");
+  const idx = parseInt(sel.value);
+  const item = state.bag[idx];
+  if (!item || item.authenticated) return;
+
+  const authFee = Math.max(50, Math.round(item.baseVal * 0.08));
+  if (state.funds < authFee) {
+    alert("Insufficient funds to pay the USGS certification fee!");
+    return;
+  }
+
+  state.funds -= authFee;
+  state.stats.authenticated++;
+  item.authenticated = true;
+
+  saveGame();
+  updateStatusBar();
+  updateLabPreview();
+
+  const newAppraisal = getItemAppraisal(item);
+  document.getElementById("lab-result-log").innerHTML = `
+    <div style="background:#f2f7fc; border:2px solid var(--accent-blue); padding:12px; font-family:var(--font-mono); font-size:0.85rem;">
+      <strong style="color:var(--accent-blue);">[ USGS &amp; SMITHSONIAN CERTIFICATE OF AUTHENTICITY ]</strong><br>
+      XRF Spectrometry &amp; radiocarbon stratigraphy verify 100% genuine epoch &amp; mineral matrix.<br>
+      AUTHENTICATION STATUS: <strong>CERTIFIED GENUINE</strong> &bull; PRESTIGE BOOST: <strong>+40% Permanent Value</strong><br>
+      NEW CERTIFIED LOT APPRAISAL: <strong>$${newAppraisal.toLocaleString()}</strong> (Doubles Bidding War Probability)
+    </div>
+  `;
+}
+
+// ============================================================================
+// 10. ARCHIVAL CONSORTIUM LIVE AUCTION & CLASH MECHANIC
+// ============================================================================
+function setupAuctionConsignSelect() {
+  const sel = document.getElementById("auction-item-select");
+  sel.innerHTML = "";
+  if (state.bag.length === 0) {
+    const opt = document.createElement("option");
+    opt.innerText = "No unconsigned items in pack";
+    sel.appendChild(opt);
+    return;
+  }
+  state.bag.forEach((it, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    const curVal = getItemAppraisal(it);
+    opt.innerText = `${it.name} (Tier ${it.tier} - $${curVal.toLocaleString()})${it.grade ? ' ['+it.grade+']' : ''}${it.authenticated ? ' [CERT]' : ''}`;
+    sel.appendChild(opt);
+  });
+}
+
+function startAuctionConsignment() {
+  const sel = document.getElementById("auction-item-select");
+  const idx = parseInt(sel.value);
+  if (isNaN(idx) || !state.bag[idx]) return;
+  const item = state.bag.splice(idx, 1)[0];
+  startConsignmentWithItem(item);
+}
+
+function startConsignmentWithItem(item) {
+  activeAuction.running = true;
+  activeAuction.item = item;
+  activeAuction.stepCount = 0;
+  
+  const appraisedVal = getItemAppraisal(item);
+  activeAuction.highBid = Math.round(appraisedVal * 0.45); // opens at 45%
+  activeAuction.highBidder = "Consortium Reserve Floor";
+  
+  // Bidding clash chance: higher if authenticated!
+  let clashRoll = Math.random();
+  let clashThreshold = 0.20;
+  if (item.tier >= 5) clashThreshold = 0.85;
+  else if (item.tier === 4) clashThreshold = 0.45;
+  else if (item.tier === 3) clashThreshold = 0.25;
+
+  if (item.authenticated) clashThreshold += 0.20; // Authentication sparks bidding wars!
+
+  activeAuction.clashActive = clashRoll < clashThreshold;
+  if (activeAuction.clashActive) state.stats.clashes++;
+
+  document.getElementById("auction-select-area").style.display = "none";
+  document.getElementById("auction-active-area").style.display = "block";
+  document.getElementById("clash-banner").style.display = activeAuction.clashActive ? "block" : "none";
+  document.getElementById("auction-lot-title").innerText = `Lot #${Math.floor(100 + Math.random()*900)}: ${item.name}`;
+  document.getElementById("auction-lot-meta").innerText = `TIER ${item.tier} | ${item.grade ? 'GRADE: ' + item.grade : 'UNGRADED'} | ${item.authenticated ? 'AUTHENTICATED' : 'UNCERTIFIED'}`;
+  document.getElementById("auction-ticker").innerHTML = "";
+
+  addTickerLine(`[AUCTIONEER] "Floor is open for Lot: ${item.name}. Certified appraisal baseline: $${appraisedVal.toLocaleString()}."`);
+  if (item.grade) addTickerLine(`[AUCTIONEER] "Certified in archival slab at grade ${item.grade}."`);
+  if (item.authenticated) addTickerLine(`[AUCTIONEER] "Accompanied by USGS certified provenance documentation."`);
+  addTickerLine(`[AUCTIONEER] "Opening gavel at $${activeAuction.highBid.toLocaleString()}..."`);
+  
+  updateAuctionDisplay();
+}
+
+function addTickerLine(text) {
+  const ticker = document.getElementById("auction-ticker");
+  const line = document.createElement("div");
+  line.style.margin = "4px 0";
+  line.innerHTML = text;
+  ticker.appendChild(line);
+  ticker.scrollTop = ticker.scrollHeight;
+}
+
+function updateAuctionDisplay() {
+  document.getElementById("auction-high-bid").innerText = "$" + activeAuction.highBid.toLocaleString();
+  document.getElementById("auction-high-bidder").innerText = `Leader: ${activeAuction.highBidder}`;
+}
+
+function advanceAuction() {
+  if (!activeAuction.running) return;
+  activeAuction.stepCount++;
+
+  let contenders = BIDDER_DIRECTORY.filter(b => b.budget > activeAuction.highBid);
+  if (contenders.length === 0) contenders = [BIDDER_DIRECTORY[6]]; // Hans Sloane Trust
+
+  const bidder = contenders[Math.floor(Math.random() * contenders.length)];
+
+  let increment = 0;
+  if (activeAuction.clashActive) {
+    if (activeAuction.highBid < 1000000) increment = 250000;
+    else if (activeAuction.highBid < 10000000) increment = 1500000;
+    else increment = 5000000; // Multi-million jumps!
+  } else {
+    increment = Math.max(500, Math.round(activeAuction.highBid * 0.15));
+  }
+
+  activeAuction.highBid += increment;
+  activeAuction.highBidder = bidder.name;
+
+  addTickerLine(`&gt;&gt; <strong>${bidder.name}</strong> raises the floor: <strong>$${activeAuction.highBid.toLocaleString()}</strong>!`);
+  
+  if (activeAuction.clashActive && Math.random() < 0.35) {
+    addTickerLine(`[ROOM WHISPER] Intense institutional duel escalating across the floor!`);
+  }
+
+  updateAuctionDisplay();
+}
+
+function callFinalBids() {
+  if (!activeAuction.running) return;
+  addTickerLine(`[AUCTIONEER] "Calling for final bids on ${activeAuction.item.name} at $${activeAuction.highBid.toLocaleString()}!"`);
+  
+  if (Math.random() < 0.6) {
+    const bigJump = activeAuction.clashActive ? 2500000 : Math.round(activeAuction.highBid * 0.3);
+    activeAuction.highBid += bigJump;
+    activeAuction.highBidder = "The Hans Sloane Heritage Trust";
+    addTickerLine(`&gt;&gt; <strong>Hans Sloane Heritage Trust</strong> counters with an overwhelming hammer offer: <strong>$${activeAuction.highBid.toLocaleString()}</strong>!`);
+  }
+  
+  addTickerLine(`[AUCTIONEER] "Fair warning... Going once... Going twice..."`);
+  updateAuctionDisplay();
+}
+
+function hammerDown() {
+  if (!activeAuction.running) return;
+  activeAuction.running = false;
+  state.stats.auctionsWon++;
+
+  const hammerPrice = activeAuction.highBid;
+  const fee = Math.round(hammerPrice * 0.05); // 5% fee
+  const net = hammerPrice - fee;
+  
+  state.funds += net;
+  saveGame();
+  updateStatusBar();
+
+  addTickerLine(`****************************************************************`);
+  addTickerLine(`[GAVEL STRIKES] <strong>SOLD for $${hammerPrice.toLocaleString()}!</strong>`);
+  addTickerLine(`Acquired by: <strong>${activeAuction.highBidder}</strong>.`);
+  addTickerLine(`Consortium Filing Fee (5%): -$${fee.toLocaleString()}`);
+  addTickerLine(`Net Proceeds Deposited: <strong>+$${net.toLocaleString()}</strong>`);
+  addTickerLine(`****************************************************************`);
+
+  document.getElementById("auction-controls").innerHTML = `
+    <button class="action-btn" onclick="resetAuctionFloor()">Return to Floor Registry</button>
+  `;
+}
+
+function resetAuctionFloor() {
+  document.getElementById("auction-select-area").style.display = "block";
+  document.getElementById("auction-active-area").style.display = "none";
+  document.getElementById("auction-controls").innerHTML = `
+    <button class="action-btn" onclick="advanceAuction()">[ Let Floor Run ]</button>
+    <button class="action-btn" onclick="callFinalBids()">[ Demand Final Call ]</button>
+    <button class="action-btn" onclick="hammerDown()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down (Accept) ]</button>
+  `;
+  setupAuctionConsignSelect();
+}
+
+// ============================================================================
+// 11. OUTFITTER VIEW
+// ============================================================================
+function renderOutfitterView() {
+  updateStatusBar();
+  const list = document.getElementById("outfitter-list");
+  list.innerHTML = "";
+
+  OUTFITTER_GEAR.forEach(g => {
+    const isOwned = state.gear[g.id] || false;
+    const card = document.createElement("div");
+    card.className = "accession-card";
+    card.style.background = isOwned ? "#f3f8f1" : "#fff";
+    card.innerHTML = `
+      <div class="accession-header">${g.name.toUpperCase()} &bull; PRICE: $${g.price.toLocaleString()}</div>
+      <div class="accession-desc">${g.desc}</div>
+      <div style="margin-top:10px;">
+        ${isOwned 
+          ? '<span class="stamp">EQUIPPED IN FIELD KIT</span>' 
+          : `<button class="action-btn" onclick="buyGear('${g.id}', ${g.price})">Purchase Equipment ($${g.price.toLocaleString()})</button>`
+        }
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function buyGear(id, price) {
+  if (state.funds < price) {
+    alert("Insufficient funds in your Field Naturalist trust account!");
+    return;
+  }
+  state.funds -= price;
+  state.gear[id] = true;
+  saveGame();
+  renderOutfitterView();
+}
+
+// ============================================================================
+// 12. CONSERVANCY TIERS
+// ============================================================================
+const CONSERVANCY_TIERS = [
+  { tier: 1, cost: 2500, title: "Trail & Access Stabilization", perk: "Repairs footbridges and eliminates trail wear penalties." },
+  { tier: 2, cost: 15000, title: "Ecological Stream & Flora Repair", perk: "+15% find rate for rare botanical and faunal traces." },
+  { tier: 3, cost: 85000, title: "Historic Architecture & Mine Shoring", perk: "Stabilizes ancient CCC masonry and unlocks cultural survey zones." },
+  { tier: 4, cost: 350000, title: "Permanent Scientific Research Post", perk: "+30% certified auction valuation bonus for specimens from this park." },
+  { tier: 5, cost: 2500000, title: "Endowed Visitor Center Heritage Wing", perk: "Permanent brass namesake wing; grants Grand Conservator Medal." }
+];
+
+function renderConservancyView() {
+  updateStatusBar();
+  const park = ALL_PARKS.find(p => p.id === state.currentParkId);
+  const donated = state.conservancy[park.id] || 0;
+
+  const cont = document.getElementById("conservancy-tiers-display");
+  cont.innerHTML = `
+    <div style="background:#ede5d2; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
+      <h3 style="font-size:1.1rem; color:var(--accent-rust);">${park.name} Conservancy Ledger</h3>
+      <div style="font-family:var(--font-mono); font-size:0.85rem;">
+        Cumulative Endowments to this Park: <strong>$${donated.toLocaleString()}</strong>
+      </div>
+    </div>
+  `;
+
+  CONSERVANCY_TIERS.forEach(t => {
+    const isFunded = donated >= t.cost;
+    const card = document.createElement("div");
+    card.className = "accession-card";
+    card.style.background = isFunded ? "#f1f6ed" : "#fff";
+    card.innerHTML = `
+      <div class="accession-header">TIER ${t.tier}: ${t.title.toUpperCase()} &bull; ENDOWMENT: $${t.cost.toLocaleString()}</div>
+      <div class="accession-desc"><strong>BENEFIT:</strong> ${t.perk}</div>
+      <div style="margin-top:10px;">
+        ${isFunded 
+          ? '<span class="stamp">PROJECT PERMANENTLY ENDOWED</span>'
+          : `<button class="action-btn" onclick="donateToPark(${t.cost})">Fund Project ($${t.cost.toLocaleString()})</button>`
+        }
+      </div>
+    `;
+    cont.appendChild(card);
+  });
+}
+
+function donateToPark(amount) {
+  if (state.funds < amount) {
+    alert("Insufficient funds to complete this endowment!");
+    return;
+  }
+  state.funds -= amount;
+  const parkId = state.currentParkId;
+  state.conservancy[parkId] = (state.conservancy[parkId] || 0) + amount;
+  saveGame();
+  renderConservancyView();
+}
+
+// ============================================================================
+// 13. NATIONAL ATLAS (63 PARKS)
+// ============================================================================
+function renderAtlasView() {
+  updateStatusBar();
+  const cont = document.getElementById("atlas-content");
+  cont.innerHTML = "";
+
+  Object.keys(DISTRICTS).forEach(distKey => {
+    const dId = parseInt(distKey);
+    const dist = DISTRICTS[dId];
+    const parksInDist = ALL_PARKS.filter(p => p.district === dId);
+
+    const distHeader = document.createElement("div");
+    distHeader.style.cssText = "background:#ded2b9; padding:8px 12px; margin:14px 0 8px 0; font-family:var(--font-mono); font-weight:bold; border-left:4px solid var(--accent-rust);";
+    distHeader.innerText = `DISTRICT ${dId}: ${dist.name.toUpperCase()} (${parksInDist.length} PARKS)`;
+    cont.appendChild(distHeader);
+
+    parksInDist.forEach(p => {
+      const hops = Math.abs(p.district - state.homeDistrict);
+      let transitFare = hops === 0 ? 0 : hops * 320;
+      if (state.gear["gear_plane"] && (p.district === 8 || p.district === 1)) transitFare = 0;
+
+      const isCurrent = p.id === state.currentParkId;
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <div>
+          <strong>${p.name}</strong> (${p.state}, est. ${p.est})<br>
+          <span style="font-size:0.8rem; color:var(--text-muted);">
+            Zones: ${p.zones.length} | Donated: $${(state.conservancy[p.id]||0).toLocaleString()}
+          </span>
+        </div>
+        <div>
+          ${isCurrent 
+            ? '<span class="stamp">CURRENT LOCATION</span>' 
+            : `<button class="action-btn" onclick="travelToPark('${p.id}',${transitFare})">Travel (${transitFare === 0 ? 'FREE' : '$' + transitFare.toLocaleString()})</button>`
+          }
+        </div>
+      `;
+      cont.appendChild(row);
+    });
+  });
+}
+
+function travelToPark(parkId, fare) {
+  if (state.funds < fare) {
+    alert("Insufficient funds for chartered transit!");
+    return;
+  }
+  state.funds -= fare;
+  state.currentParkId = parkId;
+  state.currentZoneIndex = 0;
+  saveGame();
+  switchView('view-combing');
+}
+
+// Start game
+loadGame();
+switchView('view-combing');
+</script>
+</body>
+</html>
