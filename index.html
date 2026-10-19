@@ -167,12 +167,17 @@
     font-family: var(--font-mono);
     font-size: 0.85rem;
     padding: 12px;
-    height: 190px;
+    height: 220px;
     overflow-y: auto;
     border: 1px solid #3d3228;
     margin: 10px 0;
-    line-height: 1.4;
+    line-height: 1.45;
   }
+  .ticker-line { margin: 4px 0; }
+  .ticker-comment { color: #d4b483; font-style: italic; }
+  .ticker-bid { color: #85e385; font-weight: bold; }
+  .ticker-event { color: #ffb86c; font-weight: bold; }
+
   .bidding-clash-banner {
     background: var(--accent-rust);
     color: #fff;
@@ -235,6 +240,17 @@
     font-size: 1.25rem;
     margin-bottom: 8px;
   }
+
+  textarea.data-box {
+    width: 100%;
+    height: 110px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 8px;
+    background: #fdfbf7;
+    border: 1px solid var(--border-color);
+    margin: 8px 0;
+  }
 </style>
 </head>
 <body>
@@ -261,11 +277,12 @@
   <nav>
     <button class="nav-btn active" onclick="switchView('view-combing')">[ 1 ] Field Combing</button>
     <button class="nav-btn" onclick="switchView('view-inventory')">[ 2 ] Pack &amp; Master Ledger</button>
-    <button class="nav-btn" onclick="switchView('view-lab')">[ 3 ] Curatorial Lab (Grade &amp; Certify)</button>
+    <button class="nav-btn" onclick="switchView('view-lab')">[ 3 ] Curatorial Lab</button>
     <button class="nav-btn" onclick="switchView('view-auction')">[ 4 ] Archival Auction Floor</button>
     <button class="nav-btn" onclick="switchView('view-outfitter')">[ 5 ] Backcountry Outfitter</button>
     <button class="nav-btn" onclick="switchView('view-conservancy')">[ 6 ] Conservancy &amp; Support</button>
     <button class="nav-btn" onclick="switchView('view-atlas')">[ 7 ] National Atlas (63 Parks)</button>
+    <button class="nav-btn" onclick="switchView('view-save')" style="background:#e0d2bc; font-weight:bold;">[ 8 ] Save &amp; Field Data</button>
   </nav>
 
   <!-- PANEL 1: FIELD COMBING -->
@@ -309,7 +326,7 @@
   <div id="view-lab" class="view-panel">
     <h2 style="font-size:1.3rem; margin-bottom:6px;">Curatorial Laboratory &amp; Bureau of Standards</h2>
     <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
-      Professional preservation facilities. Grading physical preservation and certifying geological/archaeological provenance permanently elevates auction appraisals and prevents institutional discount bids.
+      Professional preservation facilities. Grading physical preservation and certifying provenance permanently elevates auction appraisals and prevents institutional discount bids.
     </p>
 
     <div style="background:#ede5d2; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
@@ -320,12 +337,11 @@
     <div id="lab-active-area" style="display:none;">
       <div id="lab-specimen-card" class="accession-card"></div>
       
-      <div class="grid-2" style="margin-top:12px;">
-        <!-- Service 1: Physical Condition Grading -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px;">
         <div style="background:#fff; border:2px solid var(--accent-gold); padding:14px;">
           <h3 style="font-size:1.05rem; color:var(--accent-gold); margin-bottom:6px;">Consortium Condition Grading</h3>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
-            Stereomicroscopic evaluation of conchoidal edge flaking, mineral surface luster, and patina. Assigns an official archival grade (up to 2.50x value multiplier).
+            Stereomicroscopic evaluation of edge flaking, mineral luster, and patina (up to 2.50x multiplier).
           </p>
           <div style="font-family:var(--font-mono); font-size:0.85rem; margin-bottom:8px;">
             Service Fee: <strong id="lab-grade-fee">$0</strong>
@@ -333,11 +349,10 @@
           <button id="btn-do-grade" class="action-btn" onclick="executeGrading()">Submit for Official Grading</button>
         </div>
 
-        <!-- Service 2: Scientific Spectrometric Authentication -->
         <div style="background:#fff; border:2px solid var(--accent-blue); padding:14px;">
           <h3 style="font-size:1.05rem; color:var(--accent-blue); margin-bottom:6px;">USGS &amp; Smithsonian Authentication</h3>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
-            Elemental XRF spectrometry and radiocarbon epoch verification. Certifies authenticity, eliminates counter-offer skepticism (+40% permanent base value bonus), and doubles bidding war likelihood.
+            Elemental XRF spectrometry and radiocarbon stratigraphy (+40% permanent base value bonus; doubles clash odds).
           </p>
           <div style="font-family:var(--font-mono); font-size:0.85rem; margin-bottom:8px;">
             Certification Fee: <strong id="lab-auth-fee">$0</strong>
@@ -354,33 +369,37 @@
   <div id="view-auction" class="view-panel">
     <h2 style="font-size:1.3rem; margin-bottom:8px;">The Archival Consortium: Bidding Floor</h2>
     <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">
-      Accredited domestic and international museums, universities, and sovereign heritage trusts bid for permanent exhibition sponsorship.
+      Live 15-second public bidding session. Global museums, academic trusts, and sovereign endowments compete autonomously for curation rights.
     </p>
 
     <div id="auction-select-area" style="background:#ede4d1; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
       <label style="font-family:var(--font-mono); font-size:0.85rem;"><strong>SELECT LOT TO CONSIGN:</strong></label>
       <select id="auction-item-select" style="font-family:var(--font-serif); font-size:0.9rem; padding:4px 8px; margin-left:8px;"></select>
-      <button class="action-btn" onclick="startAuctionConsignment()" style="margin-left:8px;">Send Lot to Rostrum</button>
+      <button class="action-btn" onclick="startAuctionConsignment()" style="margin-left:8px; font-weight:bold;">Send Lot to Rostrum</button>
     </div>
 
     <div id="auction-active-area" style="display:none;" class="auction-box">
       <div id="clash-banner" class="bidding-clash-banner" style="display:none;">
-        &#9888; CURATORIAL CLASH: GLOBAL INSTITUTIONAL DUEL IN PROGRESS &#9888;
+        &#9888; CURATORIAL CLASH: MULTI-INSTITUTION BID WAR IN PROGRESS &#9888;
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
         <h3 id="auction-lot-title" style="color:var(--accent-rust);">Lot #001: Specimen Name</h3>
-        <div id="auction-lot-meta" style="font-family:var(--font-mono); font-size:0.85rem;"></div>
+        <div id="auction-timer-display" style="font-family:var(--font-mono); font-size:0.9rem; font-weight:bold; color:var(--accent-rust);">
+          FLOOR CLOCK: 15s
+        </div>
       </div>
+      <div id="auction-lot-meta" style="font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;"></div>
+      
       <div id="auction-ticker" class="ticker-box"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-top:10px; gap:8px;">
         <div style="font-family:var(--font-mono); font-size:1.05rem;">
-          HIGH BID: <strong id="auction-high-bid" style="color:var(--accent-gold);">$0</strong>
+          CURRENT HIGH BID: <strong id="auction-high-bid" style="color:var(--accent-gold);">$0</strong>
           <span id="auction-high-bidder" style="font-size:0.82rem; color:var(--text-muted); margin-left:6px;"></span>
         </div>
         <div id="auction-controls">
-          <button class="action-btn" onclick="advanceAuction()">[ Let Floor Run ]</button>
-          <button class="action-btn" onclick="callFinalBids()">[ Demand Final Call ]</button>
-          <button class="action-btn" onclick="hammerDown()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down (Accept) ]</button>
+          <button id="btn-hammer-early" class="action-btn" onclick="hammerDownEarly()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down Early ]</button>
+          <button id="btn-spur-floor" class="action-btn" onclick="spurTheFloor()">[ Spur the Floor ]</button>
         </div>
       </div>
     </div>
@@ -395,14 +414,10 @@
     <div id="outfitter-list"></div>
   </div>
 
-  <!-- PANEL 6: PARK CONSERVANCY & CREATOR SUPPORT -->
+  <!-- PANEL 6: CONSERVANCY & SUPPORT -->
   <div id="view-conservancy" class="view-panel">
     <h2 style="font-size:1.3rem; margin-bottom:8px;">Preservation, Real-World Stewardship &amp; Creator Support</h2>
-    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
-      Preserving our public lands both inside the simulation and out in the real wilderness.
-    </p>
 
-    <!-- REAL WORLD HEARTFELT CREATOR BOX -->
     <div class="family-letter-box">
       <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--accent-gold); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
         &bull; A Note from the Trail &bull;
@@ -426,11 +441,10 @@
       </div>
     </div>
 
-    <!-- REAL WORLD OFFICIAL DONATION LINK -->
     <div style="background:#f1f6ed; border:2px solid var(--accent-green); padding:16px 20px; margin-bottom:20px;">
       <h3 style="font-size:1.15rem; color:var(--accent-green); margin-bottom:6px;">Support the Real National Parks</h3>
       <p style="font-size:0.92rem; line-height:1.5; margin-bottom:12px;">
-        The actual National Park System relies on conservationists like you to protect wildlife habitats, fund youth education, and restore historical landmarks across more than 85 million acres.
+        The actual National Park System relies on conservationists to protect wildlife habitats, fund youth education, and restore historical landmarks across more than 85 million acres.
       </p>
       <a href="https://give.nationalparks.org" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <button class="action-btn" style="background:var(--accent-green); color:#fff; font-weight:bold; padding:8px 16px; border:none; cursor:pointer;">
@@ -439,7 +453,6 @@
       </a>
     </div>
 
-    <!-- IN-GAME CONSERVANCY TIERS -->
     <h3 style="font-size:1.15rem; margin:16px 0 8px 0; color:var(--accent-rust);">In-Game Park Endowments</h3>
     <div id="conservancy-tiers-display"></div>
   </div>
@@ -452,11 +465,73 @@
     </p>
     <div id="atlas-content"></div>
   </div>
+
+  <!-- PANEL 8: SAVE & FIELD DATA -->
+  <div id="view-save" class="view-panel">
+    <h2 style="font-size:1.3rem; margin-bottom:8px; color:var(--accent-rust);">Field Journal Storage &amp; Career Records</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
+      The logbook auto-saves after every discovery, grade, and auction. You can also save manually or back up your raw ledger string.
+    </p>
+
+    <div style="background:#ede4d1; border:1px solid var(--border-light); padding:16px; margin-bottom:16px;">
+      <h3 style="font-size:1.05rem; margin-bottom:8px;">Browser Local Storage</h3>
+      <div id="save-status-msg" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--accent-green); margin-bottom:10px;">
+        Status: Auto-save active.
+      </div>
+      <button class="action-btn" onclick="manualSaveClick()">&#128190; Save Game Now</button>
+      <button class="action-btn" onclick="manualReloadClick()">&#128260; Reload from Browser Save</button>
+    </div>
+
+    <div style="background:#fff; border:2px solid var(--border-color); padding:16px; margin-bottom:16px;">
+      <h3 style="font-size:1.05rem; color:var(--accent-gold); margin-bottom:6px;">Export Career Backup</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">
+        Copy or download your full career save string.
+      </p>
+      <button class="action-btn" onclick="generateExportString()">Generate Export Code</button>
+      <button class="action-btn" onclick="downloadBackupFile()">Download Backup File (.json)</button>
+      <textarea id="export-text-area" class="data-box" readonly placeholder="Click 'Generate Export Code' to display your save string..."></textarea>
+    </div>
+
+    <div style="background:#fff; border:2px solid var(--accent-blue); padding:16px; margin-bottom:16px;">
+      <h3 style="font-size:1.05rem; color:var(--accent-blue); margin-bottom:6px;">Import Career Backup</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">
+        Paste a previously generated backup code below and click Restore.
+      </p>
+      <textarea id="import-text-area" class="data-box" placeholder="Paste your exported save JSON string here..."></textarea>
+      <button class="action-btn" style="background:#cfe0f1;" onclick="importSaveString()">Restore Ledger from Code</button>
+    </div>
+
+    <div style="background:#faece8; border:1px solid var(--accent-rust); padding:14px; margin-top:20px;">
+      <h3 style="font-size:1rem; color:var(--accent-rust); margin-bottom:4px;">Reset Career Ledger</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">
+        Permanently clear your local save file and start over.
+      </p>
+      <button class="action-btn" style="background:#e4a99b; font-weight:bold;" onclick="hardResetGame()">&#9888; Wipe All Progress &amp; Reset</button>
+    </div>
+  </div>
 </div>
 
 <script>
 // ============================================================================
-// 1. DATA: 8 SURVEY DISTRICTS & ALL 63 US NATIONAL PARKS
+// CURRENCY FORMATTER (M, B, T ABBREVIATIONS ABOVE $1,000,000)
+// ============================================================================
+function formatMoney(amount) {
+  if (amount == null || isNaN(amount)) return "$0";
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  if (abs >= 1e12) {
+    return sign + "$" + (abs / 1e12).toFixed(2) + "T";
+  } else if (abs >= 1e9) {
+    return sign + "$" + (abs / 1e9).toFixed(2) + "B";
+  } else if (abs >= 1e6) {
+    return sign + "$" + (abs / 1e6).toFixed(2) + "M";
+  } else {
+    return sign + "$" + Math.round(abs).toLocaleString();
+  }
+}
+
+// ============================================================================
+// 1. DATA: 8 SURVEY DISTRICTS & 63 US NATIONAL PARKS
 // ============================================================================
 const DISTRICTS = {
   1: { name: "Pacific Northwest & Cascades", color: "#2d5a37" },
@@ -590,7 +665,7 @@ const ALL_PARKS = [
     { title: "Active Crescent Barchan Dunes", desc: "Shifting waves of cool, snow-white gypsum sand ripples shaped by desert winds." },
     { title: "Playa Margin Mud Crack Basin", desc: "Sun-baked alkaline silt flats holding fossilized ice-age human and mammoth trackways." }
   ]},
-  { id: "cave", name: "Carlsbad Caverns National Park", state: "AZ", est: 1930, district: 3, zones: [
+  { id: "cave", name: "Carlsbad Caverns National Park", state: "NM", est: 1930, district: 3, zones: [
     { title: "Big Room Limestone Breakdown", desc: "Vast subterranean chamber holding ancient limestone breakdown blocks and fallen stalactites." },
     { title: "Slaughter Canyon Desert Arroyo", desc: "Arid limestone canyon mouth filled with lechuguilla, sotol cactus, and marine fossil float." },
     { title: "Bat Cave Guano Floor Fringe", desc: "Dry organic deposits and floor dust rich in ancient faunal bone fragments and mineral salts." }
@@ -806,7 +881,7 @@ const ALL_PARKS = [
 // 2. MASTER SPECIMENS & CROWN JEWELS (TIER 1 - 5)
 // ============================================================================
 const MASTER_SPECIMENS = [
-  // CROWN JEWELS (Tier V: $1.2M - $8.5M+)
+  // CROWN JEWELS (Tier V: $1.2M - $8.5M+ baseline)
   {
     id: "KOVA_TUSK",
     parkId: "kova",
@@ -1051,11 +1126,11 @@ const OUTFITTER_GEAR = [
 ];
 
 // ============================================================================
-// 5. GAME STATE
+// 5. GAME STATE & SAVE MANAGEMENT
 // ============================================================================
-let state = {
-  homeDistrict: 3, // Southwest
-  currentParkId: "zion", // Zion National Park
+const DEFAULT_STATE = {
+  homeDistrict: 3,
+  currentParkId: "zion",
   currentZoneIndex: 0,
   funds: 1250,
   bag: [],
@@ -1065,38 +1140,117 @@ let state = {
   stats: { combed: 0, finds: 0, auctionsWon: 0, clashes: 0, graded: 0, authenticated: 0 }
 };
 
-let activeAuction = {
-  running: false,
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+// Runtime Live Auction Object
+let liveAuction = {
+  active: false,
+  timerId: null,
+  secondsLeft: 15,
   item: null,
-  highBid: 0,
+  currentBid: 0,
   highBidder: "",
-  clashActive: false,
-  stepCount: 0
+  targetCeiling: 0,
+  isClash: false,
+  competingInstitutions: [],
+  spurred: false,
+  cadenceStep: 0
 };
 
-function loadGame() {
-  const saved = localStorage.getItem("living_archive_save_v2");
-  if (saved) {
-    try { state = JSON.parse(saved); } catch(e) { console.error("Save load error", e); }
-  }
-  updateStatusBar();
+function saveGame() {
+  localStorage.setItem("living_archive_save_v4", JSON.stringify(state));
+  const msg = document.getElementById("save-status-msg");
+  if (msg) msg.innerText = "Status: Last auto-saved at " + new Date().toLocaleTimeString();
 }
 
-function saveGame() {
-  localStorage.setItem("living_archive_save_v2", JSON.stringify(state));
+function loadGame() {
+  const saved = localStorage.getItem("living_archive_save_v4");
+  if (saved) {
+    try { 
+      state = JSON.parse(saved); 
+      return true;
+    } catch(e) { 
+      console.error("Save load error", e); 
+    }
+  }
+  return false;
+}
+
+function manualSaveClick() {
+  saveGame();
+  alert("Field Journal permanently saved to browser storage!");
+}
+
+function manualReloadClick() {
+  if (loadGame()) {
+    updateStatusBar();
+    switchView('view-combing');
+    alert("Field Journal successfully reloaded from browser save!");
+  } else {
+    alert("No previous save file found in this browser.");
+  }
+}
+
+function generateExportString() {
+  const code = JSON.stringify(state);
+  document.getElementById("export-text-area").value = code;
+}
+
+function downloadBackupFile() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `Field_Naturalist_Ledger_${new Date().toISOString().slice(0,10)}.json`);
+  dlAnchor.click();
+}
+
+function importSaveString() {
+  const raw = document.getElementById("import-text-area").value.trim();
+  if (!raw) {
+    alert("Please paste your save JSON string into the box first.");
+    return;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.funds && parsed.funds !== 0) throw new Error("Invalid ledger structure.");
+    state = parsed;
+    saveGame();
+    updateStatusBar();
+    switchView('view-combing');
+    alert("Career ledger successfully restored!");
+  } catch(e) {
+    alert("Invalid save code. Please ensure you copied the entire text string.");
+  }
+}
+
+function hardResetGame() {
+  if (confirm("Are you sure you want to reset your entire naturalist career? All funds, cataloged relics, and endowments will be cleared.")) {
+    if (liveAuction.timerId) clearInterval(liveAuction.timerId);
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    saveGame();
+    updateStatusBar();
+    switchView('view-combing');
+    alert("Archive reset complete. Welcome back to the trail!");
+  }
 }
 
 // ============================================================================
 // 6. UI VIEW MANAGEMENT
 // ============================================================================
 function switchView(panelId) {
+  if (liveAuction.active && panelId !== 'view-auction') {
+    if (!confirm("An auction is actively underway on the rostrum! Leaving will let the floor run automatically. Proceed?")) {
+      return;
+    }
+  }
+
   document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active-panel"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(panelId).classList.add("active-panel");
   
   const navBtns = document.querySelectorAll(".nav-btn");
   navBtns.forEach(btn => {
-    if (btn.getAttribute("onclick").includes(panelId)) btn.classList.add("active");
+    if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(panelId)) btn.classList.add("active");
   });
 
   if (panelId === 'view-combing') renderCombingView();
@@ -1113,18 +1267,17 @@ function updateStatusBar() {
   const dist = DISTRICTS[park.district];
   document.getElementById("bar-park").innerText = park.name;
   document.getElementById("bar-district").innerText = dist.name;
-  document.getElementById("bar-funds").innerText = "$" + state.funds.toLocaleString();
+  document.getElementById("bar-funds").innerText = formatMoney(state.funds);
   document.getElementById("bar-bag").innerText = state.bag.length + " in pack";
   
   const totalDonated = Object.values(state.conservancy).reduce((a,b) => a+b, 0);
-  document.getElementById("bar-donations").innerText = "$" + totalDonated.toLocaleString();
+  document.getElementById("bar-donations").innerText = formatMoney(totalDonated);
 }
 
-// Helper to compute effective item value with grading & authentication
 function getItemAppraisal(item) {
-  let val = Math.round(item.baseVal * 1.5); // 50% rescaled baseline
+  let val = Math.round(item.baseVal * 1.5);
   if (item.gradeMultiplier) val = Math.round(val * item.gradeMultiplier);
-  if (item.authenticated) val = Math.round(val * 1.40); // +40% certification boost
+  if (item.authenticated) val = Math.round(val * 1.40);
   return val;
 }
 
@@ -1195,7 +1348,6 @@ function combLandscape(actionType) {
       };
     }
 
-    // Default ungraded & unauthenticated
     foundSpecimen.grade = null;
     foundSpecimen.gradeMultiplier = 1.0;
     foundSpecimen.authenticated = false;
@@ -1215,7 +1367,7 @@ function combLandscape(actionType) {
         <div class="accession-row"><strong>SPECIMEN:</strong> ${foundSpecimen.name} (${foundSpecimen.cat})</div>
         <div class="accession-row"><strong>LOCALITY:</strong> ${park.name} &mdash; ${park.zones[state.currentZoneIndex].title}</div>
         <div class="accession-row"><strong>STRATIGRAPHY / ERA:</strong> ${foundSpecimen.era}</div>
-        <div class="accession-row"><strong>ESTIMATED BASE VALUE:</strong> $${curVal.toLocaleString()} (Tier ${foundSpecimen.tier})</div>
+        <div class="accession-row"><strong>ESTIMATED BASE VALUE:</strong> ${formatMoney(curVal)} (Tier ${foundSpecimen.tier})</div>
         <div class="accession-desc">
           <strong>FIELD NATURALIST NOTES:</strong> ${foundSpecimen.desc}
         </div>
@@ -1265,7 +1417,7 @@ function renderPackView(subTab) {
           </div>
         </div>
         <div class="accession-row"><strong>${item.name}</strong> &mdash; ${item.cat}</div>
-        <div class="accession-row">Certified Appraisal Value: <strong>$${curVal.toLocaleString()}</strong></div>
+        <div class="accession-row">Certified Appraisal Value: <strong>${formatMoney(curVal)}</strong></div>
         <div class="accession-desc">${item.desc}</div>
         <div style="margin-top:10px;">
           <button class="action-btn" onclick="directItemToLab(${index})">Take to Curatorial Lab</button>
@@ -1310,7 +1462,7 @@ function directItemToAuction(bagIndex) {
 }
 
 // ============================================================================
-// 9. CURATORIAL LAB: GRADING & AUTHENTICATION SERVICES
+// 9. CURATORIAL LAB: GRADING & AUTHENTICATION
 // ============================================================================
 function renderLabView() {
   updateStatusBar();
@@ -1344,12 +1496,11 @@ function updateLabPreview() {
   const item = state.bag[idx];
   const curVal = getItemAppraisal(item);
 
-  // Fee calculation: Grading = 5% of base value (min $25); Auth = 8% of base value (min $50)
   const gradeFee = Math.max(25, Math.round(item.baseVal * 0.05));
   const authFee = Math.max(50, Math.round(item.baseVal * 0.08));
 
-  document.getElementById("lab-grade-fee").innerText = "$" + gradeFee.toLocaleString();
-  document.getElementById("lab-auth-fee").innerText = "$" + authFee.toLocaleString();
+  document.getElementById("lab-grade-fee").innerText = formatMoney(gradeFee);
+  document.getElementById("lab-auth-fee").innerText = formatMoney(authFee);
 
   const card = document.getElementById("lab-specimen-card");
   card.innerHTML = `
@@ -1361,11 +1512,10 @@ function updateLabPreview() {
       </div>
     </div>
     <div class="accession-row"><strong>CATEGORY:</strong> ${item.cat} | <strong>ERA:</strong> ${item.era}</div>
-    <div class="accession-row"><strong>CURRENT CERTIFIED APPRAISAL:</strong> $${curVal.toLocaleString()}</div>
+    <div class="accession-row"><strong>CURRENT CERTIFIED APPRAISAL:</strong> ${formatMoney(curVal)}</div>
     <div class="accession-desc">${item.desc}</div>
   `;
 
-  // Disable button if already completed
   const btnGrade = document.getElementById("btn-do-grade");
   const btnAuth = document.getElementById("btn-do-auth");
 
@@ -1374,7 +1524,7 @@ function updateLabPreview() {
     btnGrade.innerText = `Graded: ${item.grade}`;
   } else {
     btnGrade.disabled = false;
-    btnGrade.innerText = `Submit for Official Grading ($${gradeFee.toLocaleString()})`;
+    btnGrade.innerText = `Submit for Official Grading (${formatMoney(gradeFee)})`;
   }
 
   if (item.authenticated) {
@@ -1382,7 +1532,7 @@ function updateLabPreview() {
     btnAuth.innerText = "Certified Genuine";
   } else {
     btnAuth.disabled = false;
-    btnAuth.innerText = `Perform Authentication Assay ($${authFee.toLocaleString()})`;
+    btnAuth.innerText = `Perform Authentication Assay (${formatMoney(authFee)})`;
   }
 
   document.getElementById("lab-result-log").innerHTML = "";
@@ -1403,7 +1553,6 @@ function executeGrading() {
   state.funds -= gradeFee;
   state.stats.graded++;
 
-  // Determine grade based on random roll + gear
   const roll = Math.random();
   let gradeName = "Fine";
   let mult = 1.25;
@@ -1435,7 +1584,7 @@ function executeGrading() {
       <strong style="color:var(--accent-gold);">[ CONSORTIUM GRADING CERTIFICATE ISSUED ]</strong><br>
       High-power stereomicroscopy reveals pristine edge retention and intact patina.<br>
       OFFICIAL ASSIGNED GRADE: <strong>${gradeName}</strong> &bull; MULTIPLIER: <strong>${mult}x</strong><br>
-      NEW CERTIFIED LOT APPRAISAL: <strong>$${newAppraisal.toLocaleString()}</strong>
+      NEW CERTIFIED LOT APPRAISAL: <strong>${formatMoney(newAppraisal)}</strong>
     </div>
   `;
 }
@@ -1466,13 +1615,13 @@ function executeAuthentication() {
       <strong style="color:var(--accent-blue);">[ USGS &amp; SMITHSONIAN CERTIFICATE OF AUTHENTICITY ]</strong><br>
       XRF Spectrometry &amp; radiocarbon stratigraphy verify 100% genuine epoch &amp; mineral matrix.<br>
       AUTHENTICATION STATUS: <strong>CERTIFIED GENUINE</strong> &bull; PRESTIGE BOOST: <strong>+40% Permanent Value</strong><br>
-      NEW CERTIFIED LOT APPRAISAL: <strong>$${newAppraisal.toLocaleString()}</strong> (Doubles Bidding War Probability)
+      NEW CERTIFIED LOT APPRAISAL: <strong>${formatMoney(newAppraisal)}</strong> (Doubles Bidding War Probability)
     </div>
   `;
 }
 
 // ============================================================================
-// 10. ARCHIVAL CONSORTIUM LIVE AUCTION & CLASH MECHANIC
+// 10. REAL-TIME 15-SECOND LIVE AUCTION ENGINE (NO MORE INFINITE CLICKS)
 // ============================================================================
 function setupAuctionConsignSelect() {
   const sel = document.getElementById("auction-item-select");
@@ -1487,7 +1636,7 @@ function setupAuctionConsignSelect() {
     const opt = document.createElement("option");
     opt.value = i;
     const curVal = getItemAppraisal(it);
-    opt.innerText = `${it.name} (Tier ${it.tier} - $${curVal.toLocaleString()})${it.grade ? ' ['+it.grade+']' : ''}${it.authenticated ? ' [CERT]' : ''}`;
+    opt.innerText = `${it.name} (Tier ${it.tier} - ${formatMoney(curVal)})${it.grade ? ' ['+it.grade+']' : ''}${it.authenticated ? ' [CERT]' : ''}`;
     sel.appendChild(opt);
   });
 }
@@ -1501,132 +1650,222 @@ function startAuctionConsignment() {
 }
 
 function startConsignmentWithItem(item) {
-  activeAuction.running = true;
-  activeAuction.item = item;
-  activeAuction.stepCount = 0;
+  if (liveAuction.timerId) clearInterval(liveAuction.timerId);
+
+  const appraised = getItemAppraisal(item);
   
-  const appraisedVal = getItemAppraisal(item);
-  activeAuction.highBid = Math.round(appraisedVal * 0.45); // opens at 45%
-  activeAuction.highBidder = "Consortium Reserve Floor";
-  
-  // Bidding clash chance: higher if authenticated!
-  let clashRoll = Math.random();
+  // Calculate strict realistic maximum ceiling
+  let maxMultiplier = 1.35;
+  if (item.tier === 1) maxMultiplier = 1.3 + Math.random() * 0.4; // Max ~$200 - $800
+  else if (item.tier === 2) maxMultiplier = 1.4 + Math.random() * 0.8; // Max ~$1,500 - $7,000
+  else if (item.tier === 3) maxMultiplier = 1.6 + Math.random() * 1.5; // Max ~$15k - $100k
+  else if (item.tier === 4) maxMultiplier = 2.0 + Math.random() * 2.5; // Max ~$300k - $2.5M
+  else if (item.tier === 5) maxMultiplier = 3.0 + Math.random() * 6.0; // Multi-millions to tens of millions
+
   let clashThreshold = 0.20;
   if (item.tier >= 5) clashThreshold = 0.85;
   else if (item.tier === 4) clashThreshold = 0.45;
   else if (item.tier === 3) clashThreshold = 0.25;
+  if (item.authenticated) clashThreshold += 0.20;
 
-  if (item.authenticated) clashThreshold += 0.20; // Authentication sparks bidding wars!
+  const isClash = Math.random() < clashThreshold;
+  if (isClash) {
+    maxMultiplier *= (item.tier >= 4 ? 2.5 : 1.5);
+    state.stats.clashes++;
+  }
 
-  activeAuction.clashActive = clashRoll < clashThreshold;
-  if (activeAuction.clashActive) state.stats.clashes++;
+  const targetCeiling = Math.round(appraised * maxMultiplier);
+  const openingBid = Math.max(50, Math.round(appraised * 0.40));
+
+  // Determine 2 to 3 main competing bidders
+  let contenders = BIDDER_DIRECTORY.slice();
+  contenders.sort(() => Math.random() - 0.5);
+  const activeBidders = contenders.slice(0, isClash ? 4 : 2);
+
+  liveAuction = {
+    active: true,
+    timerId: null,
+    secondsLeft: 15,
+    item: item,
+    currentBid: openingBid,
+    highBidder: "Consortium Reserve Floor",
+    targetCeiling: targetCeiling,
+    isClash: isClash,
+    competingInstitutions: activeBidders,
+    spurred: false,
+    cadenceStep: 0
+  };
 
   document.getElementById("auction-select-area").style.display = "none";
   document.getElementById("auction-active-area").style.display = "block";
-  document.getElementById("clash-banner").style.display = activeAuction.clashActive ? "block" : "none";
+  document.getElementById("clash-banner").style.display = isClash ? "block" : "none";
   document.getElementById("auction-lot-title").innerText = `Lot #${Math.floor(100 + Math.random()*900)}: ${item.name}`;
-  document.getElementById("auction-lot-meta").innerText = `TIER ${item.tier} | ${item.grade ? 'GRADE: ' + item.grade : 'UNGRADED'} | ${item.authenticated ? 'AUTHENTICATED' : 'UNCERTIFIED'}`;
+  document.getElementById("auction-lot-meta").innerText = `CLASSIFICATION: ${item.cat} | TIER ${item.tier} | APPRAISAL: ${formatMoney(appraised)}`;
   document.getElementById("auction-ticker").innerHTML = "";
 
-  addTickerLine(`[AUCTIONEER] "Floor is open for Lot: ${item.name}. Certified appraisal baseline: $${appraisedVal.toLocaleString()}."`);
-  if (item.grade) addTickerLine(`[AUCTIONEER] "Certified in archival slab at grade ${item.grade}."`);
-  if (item.authenticated) addTickerLine(`[AUCTIONEER] "Accompanied by USGS certified provenance documentation."`);
-  addTickerLine(`[AUCTIONEER] "Opening gavel at $${activeAuction.highBid.toLocaleString()}..."`);
-  
-  updateAuctionDisplay();
+  document.getElementById("btn-hammer-early").disabled = false;
+  document.getElementById("btn-hammer-early").style.display = "inline-block";
+  document.getElementById("btn-spur-floor").disabled = false;
+  document.getElementById("btn-spur-floor").style.display = "inline-block";
+
+  addTickerLine(`[AUCTIONEER] "Welcome to the rostrum. Lot: <strong>${item.name}</strong>."`, "ticker-event");
+  addTickerLine(`[AUCTIONEER] "Certified Baseline Appraisal: ${formatMoney(appraised)}."`);
+  addTickerLine(`[AUCTIONEER] "Opening floor reserve set at ${formatMoney(openingBid)}."`);
+
+  updateLiveAuctionUI();
+
+  // Start 15-second heartbeat (ticking every 1.25s)
+  liveAuction.timerId = setInterval(auctionHeartbeat, 1250);
 }
 
-function addTickerLine(text) {
+function addTickerLine(htmlText, cssClass = "") {
   const ticker = document.getElementById("auction-ticker");
   const line = document.createElement("div");
-  line.style.margin = "4px 0";
-  line.innerHTML = text;
+  line.className = "ticker-line " + cssClass;
+  line.innerHTML = htmlText;
   ticker.appendChild(line);
   ticker.scrollTop = ticker.scrollHeight;
 }
 
-function updateAuctionDisplay() {
-  document.getElementById("auction-high-bid").innerText = "$" + activeAuction.highBid.toLocaleString();
-  document.getElementById("auction-high-bidder").innerText = `Leader: ${activeAuction.highBidder}`;
+function updateLiveAuctionUI() {
+  document.getElementById("auction-timer-display").innerText = `FLOOR CLOCK: ${liveAuction.secondsLeft}s`;
+  document.getElementById("auction-high-bid").innerText = formatMoney(liveAuction.currentBid);
+  document.getElementById("auction-high-bidder").innerText = `Leader: ${liveAuction.highBidder}`;
 }
 
-function advanceAuction() {
-  if (!activeAuction.running) return;
-  activeAuction.stepCount++;
+function auctionHeartbeat() {
+  if (!liveAuction.active) return;
 
-  let contenders = BIDDER_DIRECTORY.filter(b => b.budget > activeAuction.highBid);
-  if (contenders.length === 0) contenders = [BIDDER_DIRECTORY[6]]; // Hans Sloane Trust
+  liveAuction.secondsLeft = Math.max(0, liveAuction.secondsLeft - 1);
+  updateLiveAuctionUI();
 
-  const bidder = contenders[Math.floor(Math.random() * contenders.length)];
+  const item = liveAuction.item;
+  const t = 15 - liveAuction.secondsLeft; // Elapsed seconds (1 to 15)
 
-  let increment = 0;
-  if (activeAuction.clashActive) {
-    if (activeAuction.highBid < 1000000) increment = 250000;
-    else if (activeAuction.highBid < 10000000) increment = 1500000;
-    else increment = 5000000; // Multi-million jumps!
-  } else {
-    increment = Math.max(500, Math.round(activeAuction.highBid * 0.15));
+  // SECOND 1-3: Expert Commentary on Grade, Authentication & Lore
+  if (t === 1) {
+    const curator = liveAuction.competingInstitutions[0].name;
+    if (item.grade) {
+      addTickerLine(`&bull; <em>${curator}</em>: <span class="ticker-comment">"Note the stereomicroscopic edge retention on this ${item.grade} slab—remarkable preservation."</span>`);
+    } else {
+      addTickerLine(`&bull; <em>${curator}</em>: <span class="ticker-comment">"A fascinating raw field find from ${item.era}."</span>`);
+    }
+  } else if (t === 2) {
+    const rival = liveAuction.competingInstitutions[1].name;
+    if (item.authenticated) {
+      addTickerLine(`&bull; <em>${rival}</em>: <span class="ticker-comment">"USGS spectrometry certification confirms the provenance. Our acquisition committee is approved to bid."</span>`);
+    } else {
+      addTickerLine(`&bull; <em>${rival}</em>: <span class="ticker-comment">"Strong educational weight in this specimen. Opening active paddle."</span>`);
+    }
   }
 
-  activeAuction.highBid += increment;
-  activeAuction.highBidder = bidder.name;
+  // ACTIVE BIDDING PHASE (Seconds 2 to 11)
+  if (t >= 2 && t <= 11) {
+    if (liveAuction.currentBid < liveAuction.targetCeiling) {
+      const remainingMargin = liveAuction.targetCeiling - liveAuction.currentBid;
+      const bidder = liveAuction.competingInstitutions[Math.floor(Math.random() * liveAuction.competingInstitutions.length)];
 
-  addTickerLine(`&gt;&gt; <strong>${bidder.name}</strong> raises the floor: <strong>$${activeAuction.highBid.toLocaleString()}</strong>!`);
-  
-  if (activeAuction.clashActive && Math.random() < 0.35) {
-    addTickerLine(`[ROOM WHISPER] Intense institutional duel escalating across the floor!`);
+      let jump = 0;
+      if (liveAuction.isClash) {
+        jump = Math.round(remainingMargin * (0.20 + Math.random() * 0.35));
+      } else {
+        jump = Math.round(remainingMargin * (0.15 + Math.random() * 0.25));
+      }
+
+      jump = Math.max(10, jump);
+      liveAuction.currentBid = Math.min(liveAuction.targetCeiling, liveAuction.currentBid + jump);
+      liveAuction.highBidder = bidder.name;
+
+      addTickerLine(`&gt;&gt; <span class="ticker-bid">${bidder.name}</span> raises the paddle: <strong>${formatMoney(liveAuction.currentBid)}</strong>!`);
+
+      if (liveAuction.isClash && Math.random() < 0.40) {
+        addTickerLine(`[FLOOR REACTION] <span class="ticker-event">Heated duel across the room—paddles remain locked in the air!</span>`);
+      }
+    } else {
+      // Reached ceiling early
+      if (liveAuction.cadenceStep === 0) {
+        addTickerLine(`[AUCTIONEER] "The floor has reached its certified limit at ${formatMoney(liveAuction.currentBid)}."`);
+        liveAuction.cadenceStep = 1;
+      }
+    }
   }
 
-  updateAuctionDisplay();
+  // CLOSING CADENCE PHASE (Seconds 12 to 14)
+  if (t === 12) {
+    addTickerLine(`[AUCTIONEER] "At ${formatMoney(liveAuction.currentBid)} to ${liveAuction.highBidder}... Going once!"`);
+  } else if (t === 13) {
+    addTickerLine(`[AUCTIONEER] "Going twice at ${formatMoney(liveAuction.currentBid)}... The room is holding."`);
+  } else if (t === 14) {
+    addTickerLine(`[AUCTIONEER] "Fair warning... Last call for institutional counters!"`);
+  }
+
+  // HAMMER STRIKE (Second 15 or 0 left)
+  if (liveAuction.secondsLeft <= 0) {
+    completeAuctionSale();
+  }
 }
 
-function callFinalBids() {
-  if (!activeAuction.running) return;
-  addTickerLine(`[AUCTIONEER] "Calling for final bids on ${activeAuction.item.name} at $${activeAuction.highBid.toLocaleString()}!"`);
-  
-  if (Math.random() < 0.6) {
-    const bigJump = activeAuction.clashActive ? 2500000 : Math.round(activeAuction.highBid * 0.3);
-    activeAuction.highBid += bigJump;
-    activeAuction.highBidder = "The Hans Sloane Heritage Trust";
-    addTickerLine(`&gt;&gt; <strong>Hans Sloane Heritage Trust</strong> counters with an overwhelming hammer offer: <strong>$${activeAuction.highBid.toLocaleString()}</strong>!`);
-  }
-  
-  addTickerLine(`[AUCTIONEER] "Fair warning... Going once... Going twice..."`);
-  updateAuctionDisplay();
-}
-
-function hammerDown() {
-  if (!activeAuction.running) return;
-  activeAuction.running = false;
+function completeAuctionSale() {
+  clearInterval(liveAuction.timerId);
+  liveAuction.active = false;
   state.stats.auctionsWon++;
 
-  const hammerPrice = activeAuction.highBid;
-  const fee = Math.round(hammerPrice * 0.05); // 5% fee
+  const hammerPrice = liveAuction.currentBid;
+  const fee = Math.round(hammerPrice * 0.05); // 5% consortium fee
   const net = hammerPrice - fee;
-  
+
   state.funds += net;
   saveGame();
   updateStatusBar();
 
-  addTickerLine(`****************************************************************`);
-  addTickerLine(`[GAVEL STRIKES] <strong>SOLD for $${hammerPrice.toLocaleString()}!</strong>`);
-  addTickerLine(`Acquired by: <strong>${activeAuction.highBidder}</strong>.`);
-  addTickerLine(`Consortium Filing Fee (5%): -$${fee.toLocaleString()}`);
-  addTickerLine(`Net Proceeds Deposited: <strong>+$${net.toLocaleString()}</strong>`);
-  addTickerLine(`****************************************************************`);
+  addTickerLine(`****************************************************************`, "ticker-event");
+  addTickerLine(`[GAVEL STRIKES] <strong>SOLD FOR ${formatMoney(hammerPrice)}!</strong>`, "ticker-bid");
+  addTickerLine(`Permanently Consigned to: <strong>${liveAuction.highBidder}</strong>.`);
+  addTickerLine(`Consortium Filing Fee (5%): -${formatMoney(fee)}`);
+  addTickerLine(`Net Proceeds Deposited into Trust: <strong>+${formatMoney(net)}</strong>`, "ticker-event");
+  addTickerLine(`****************************************************************`, "ticker-event");
 
-  document.getElementById("auction-controls").innerHTML = `
-    <button class="action-btn" onclick="resetAuctionFloor()">Return to Floor Registry</button>
+  document.getElementById("btn-hammer-early").style.display = "none";
+  document.getElementById("btn-spur-floor").style.display = "none";
+
+  const controls = document.getElementById("auction-controls");
+  controls.innerHTML = `
+    <button class="action-btn" onclick="resetAuctionFloor()" style="background:#d4c4a8; font-weight:bold;">Return to Consignment Desk</button>
   `;
+}
+
+function hammerDownEarly() {
+  if (!liveAuction.active) return;
+  addTickerLine(`[PLAYER] <strong>You signal to accept the current high bid immediately!</strong>`, "ticker-event");
+  completeAuctionSale();
+}
+
+function spurTheFloor() {
+  if (!liveAuction.active || liveAuction.spurred) return;
+  liveAuction.spurred = true;
+  document.getElementById("btn-spur-floor").disabled = true;
+
+  addTickerLine(`[AUCTIONEER] <strong>"The consigner demands a rapid jump from the floor!"</strong>`, "ticker-event");
+  
+  if (liveAuction.currentBid < liveAuction.targetCeiling) {
+    const boost = Math.round((liveAuction.targetCeiling - liveAuction.currentBid) * 0.4);
+    liveAuction.currentBid += Math.max(50, boost);
+    const bidder = liveAuction.competingInstitutions[0].name;
+    liveAuction.highBidder = bidder;
+    addTickerLine(`&gt;&gt; <span class="ticker-bid">${bidder}</span> accepts the challenge: <strong>${formatMoney(liveAuction.currentBid)}</strong>!`);
+    updateLiveAuctionUI();
+  } else {
+    addTickerLine(`[AUCTIONEER] "Bidders decline to advance beyond certified institutional reserves."`);
+  }
 }
 
 function resetAuctionFloor() {
   document.getElementById("auction-select-area").style.display = "block";
   document.getElementById("auction-active-area").style.display = "none";
-  document.getElementById("auction-controls").innerHTML = `
-    <button class="action-btn" onclick="advanceAuction()">[ Let Floor Run ]</button>
-    <button class="action-btn" onclick="callFinalBids()">[ Demand Final Call ]</button>
-    <button class="action-btn" onclick="hammerDown()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down (Accept) ]</button>
+  const controls = document.getElementById("auction-controls");
+  controls.innerHTML = `
+    <button id="btn-hammer-early" class="action-btn" onclick="hammerDownEarly()" style="background:#dfb39d; font-weight:bold;">[ Hammer Down Early ]</button>
+    <button id="btn-spur-floor" class="action-btn" onclick="spurTheFloor()">[ Spur the Floor ]</button>
   `;
   setupAuctionConsignSelect();
 }
@@ -1645,12 +1884,12 @@ function renderOutfitterView() {
     card.className = "accession-card";
     card.style.background = isOwned ? "#f3f8f1" : "#fff";
     card.innerHTML = `
-      <div class="accession-header">${g.name.toUpperCase()} &bull; PRICE: $${g.price.toLocaleString()}</div>
+      <div class="accession-header">${g.name.toUpperCase()} &bull; PRICE: ${formatMoney(g.price)}</div>
       <div class="accession-desc">${g.desc}</div>
       <div style="margin-top:10px;">
         ${isOwned 
           ? '<span class="stamp">EQUIPPED IN FIELD KIT</span>' 
-          : `<button class="action-btn" onclick="buyGear('${g.id}', ${g.price})">Purchase Equipment ($${g.price.toLocaleString()})</button>`
+          : `<button class="action-btn" onclick="buyGear('${g.id}',${g.price})">Purchase Equipment (${formatMoney(g.price)})</button>`
         }
       </div>
     `;
@@ -1690,7 +1929,7 @@ function renderConservancyView() {
     <div style="background:#ede5d2; padding:12px; border:1px solid var(--border-light); margin-bottom:14px;">
       <h3 style="font-size:1.1rem; color:var(--accent-rust);">${park.name} Conservancy Ledger</h3>
       <div style="font-family:var(--font-mono); font-size:0.85rem;">
-        Cumulative Endowments to this Park: <strong>$${donated.toLocaleString()}</strong>
+        Cumulative Endowments to this Park: <strong>${formatMoney(donated)}</strong>
       </div>
     </div>
   `;
@@ -1701,12 +1940,12 @@ function renderConservancyView() {
     card.className = "accession-card";
     card.style.background = isFunded ? "#f1f6ed" : "#fff";
     card.innerHTML = `
-      <div class="accession-header">TIER ${t.tier}: ${t.title.toUpperCase()} &bull; ENDOWMENT: $${t.cost.toLocaleString()}</div>
+      <div class="accession-header">TIER ${t.tier}: ${t.title.toUpperCase()} &bull; ENDOWMENT: ${formatMoney(t.cost)}</div>
       <div class="accession-desc"><strong>BENEFIT:</strong> ${t.perk}</div>
       <div style="margin-top:10px;">
         ${isFunded 
           ? '<span class="stamp">PROJECT PERMANENTLY ENDOWED</span>'
-          : `<button class="action-btn" onclick="donateToPark(${t.cost})">Fund Project ($${t.cost.toLocaleString()})</button>`
+          : `<button class="action-btn" onclick="donateToPark(${t.cost})">Fund Project (${formatMoney(t.cost)})</button>`
         }
       </div>
     `;
@@ -1756,13 +1995,13 @@ function renderAtlasView() {
         <div>
           <strong>${p.name}</strong> (${p.state}, est. ${p.est})<br>
           <span style="font-size:0.8rem; color:var(--text-muted);">
-            Zones: ${p.zones.length} | Donated: $${(state.conservancy[p.id]||0).toLocaleString()}
+            Zones: ${p.zones.length} | Donated: ${formatMoney(state.conservancy[p.id]||0)}
           </span>
         </div>
         <div>
           ${isCurrent 
             ? '<span class="stamp">CURRENT LOCATION</span>' 
-            : `<button class="action-btn" onclick="travelToPark('${p.id}',${transitFare})">Travel (${transitFare === 0 ? 'FREE' : '$' + transitFare.toLocaleString()})</button>`
+            : `<button class="action-btn" onclick="travelToPark('${p.id}', ${transitFare})">Travel (${transitFare === 0 ? 'FREE' : formatMoney(transitFare)})</button>`
           }
         </div>
       `;
@@ -1783,7 +2022,7 @@ function travelToPark(parkId, fare) {
   switchView('view-combing');
 }
 
-// Start game
+// Start Game
 loadGame();
 switchView('view-combing');
 </script>
